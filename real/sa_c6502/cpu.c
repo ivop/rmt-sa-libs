@@ -109,22 +109,20 @@ int cycles[256] =
             xpos++;                         \
         xpos++;                             \
         PC += sdata;                        \
-        DONE                                \
+        break;                                \
     }                                       \
     PC++;                                   \
-    DONE
+    break;
 /* decrement 1 cycle for X (or Y) index overflow */
 #define NCYCLES_Y       if ( (UBYTE) addr < Y ) xpos++;
 #define NCYCLES_X       if ( (UBYTE) addr < X ) xpos++;
 
 
-//void GO(int limit)
 int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yreg, int* maxcycles)
 {
     UBYTE insn;
 
 #define OPCODE(code)    case 0x##code:
-#define DONE            break;
 
     UBYTE N;                    //* bit7 zero (0) or bit 7 non-zero (1) * /
     UBYTE Z;                    //* zero (0) or non-zero (1) * /
@@ -161,18 +159,18 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         insn = dGetByte(PC++);
         xpos += cycles[insn];
 
-        switch (insn) {
+    switch (insn) {
 
     OPCODE(00)              /* BRK */
         {
             SA_C6502_RETURN;
         }
-        DONE
+        break;
 
     OPCODE(01)              /* ORA (ab,x) */
         INDIRECT_X;
         ORA(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(03)              /* ASO (ab,x) [unofficial - ASL then ORA with Acc] */
         INDIRECT_X;
@@ -183,7 +181,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         data <<= 1;
         PutByte(addr, data); 
         Z = N = A |= data;
-        DONE
+        break;
 
     OPCODE(04)              /* NOP ab [unofficial - skip byte] */
     OPCODE(44)
@@ -200,12 +198,12 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
     OPCODE(c2)
     OPCODE(e2)
         PC++;
-        DONE
+        break;
 
     OPCODE(05)              /* ORA ab */
         ZPAGE;
         ORA(dGetByte(addr));
-        DONE
+        break;
 
     OPCODE(06)              /* ASL ab */
         ZPAGE;
@@ -213,7 +211,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         C = (data & 0x80) ? 1 : 0;
         Z = N = data << 1;
         dPutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(07)              /* ASO zpage [unofficial - ASL then ORA with Acc] */
         ZPAGE;
@@ -224,35 +222,35 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         data <<= 1;
         dPutByte(addr, data); 
         Z = N = A |= data;
-        DONE
+        break;
 
     OPCODE(08)              /* PHP */
         PHPB1;
-        DONE
+        break;
 
     OPCODE(09)              /* ORA #ab */
         ORA(dGetByte(PC++));
-        DONE
+        break;
 
     OPCODE(0a)              /* ASL */
         C = (A & 0x80) ? 1 : 0;
         Z = N = A <<= 1;
-        DONE
+        break;
 
     OPCODE(0b)              /* ANC #ab [unofficial - AND then copy N to C (Fox) */
     OPCODE(2b)
         AND(dGetByte(PC++));
         C = N >= 0x80;
-        DONE
+        break;
 
     OPCODE(0c)              /* NOP abcd [unofficial - skip word] */
         PC += 2;
-        DONE
+        break;
 
     OPCODE(0d)              /* ORA abcd */
         ABSOLUTE;
         ORA(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(0e)              /* ASL abcd */
         ABSOLUTE;
@@ -260,7 +258,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         C = (data & 0x80) ? 1 : 0;
         Z = N = data << 1;
         PutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(0f)              /* ASO abcd [unofficial - ASL then ORA with Acc] */
         ABSOLUTE;
@@ -273,7 +271,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         INDIRECT_Y;
         NCYCLES_Y;
         ORA(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(13)              /* ASO (ab),y [unofficial - ASL then ORA with Acc] */
         INDIRECT_Y;
@@ -282,7 +280,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
     OPCODE(15)              /* ORA ab,x */
         ZPAGE_X;
         ORA(dGetByte(addr));
-        DONE
+        break;
 
     OPCODE(16)              /* ASL ab,x */
         ZPAGE_X;
@@ -290,7 +288,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         C = (data & 0x80) ? 1 : 0;
         Z = N = data << 1;
         dPutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(17)              /* ASO zpage,x [unofficial - ASL then ORA with Acc] */
         ZPAGE_X;
@@ -298,13 +296,13 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 
     OPCODE(18)              /* CLC */
         C = 0;
-        DONE
+        break;
 
     OPCODE(19)              /* ORA abcd,y */
         ABSOLUTE_Y;
         NCYCLES_Y;
         ORA(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(1b)              /* ASO abcd,y [unofficial - ASL then ORA with Acc] */
         ABSOLUTE_Y;
@@ -319,13 +317,13 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         if (dGetByte(PC) + X >= 0x100)
             xpos++;
         PC += 2;
-        DONE
+        break;
 
     OPCODE(1d)              /* ORA abcd,x */
         ABSOLUTE_X;
         NCYCLES_X;
         ORA(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(1e)              /* ASL abcd,x */
         ABSOLUTE_X;
@@ -333,7 +331,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         C = (data & 0x80) ? 1 : 0;
         Z = N = data << 1;
         PutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(1f)              /* ASO abcd,x [unofficial - ASL then ORA with Acc] */
         ABSOLUTE_X;
@@ -345,12 +343,12 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
             PHW(retadr);
             PC = dGetWord(PC);
         }
-        DONE
+        break;
 
     OPCODE(21)              /* AND (ab,x) */
         INDIRECT_X;
         AND(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(23)              /* RLA (ab,x) [unofficial - ROL Mem, then AND with A] */
         INDIRECT_X;
@@ -367,19 +365,19 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         }
         PutByte(addr, data);
         Z = N = A &= data;
-        DONE
+        break;
 
     OPCODE(24)              /* BIT ab */
         ZPAGE;
         N = dGetByte(addr);
         V = N & 0x40;
         Z = (A & N);
-        DONE
+        break;
 
     OPCODE(25)              /* AND ab */
         ZPAGE;
         AND(dGetByte(addr));
-        DONE
+        break;
 
     OPCODE(26)              /* ROL ab */
         ZPAGE;
@@ -387,7 +385,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         Z = N = (data << 1) | C;
         C = (data & 0x80) ? 1 : 0;
         dPutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(27)              /* RLA zpage [unofficial - ROL Mem, then AND with A] */
         ZPAGE;
@@ -404,34 +402,34 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         }
         dPutByte(addr, data);
         Z = N = A &= data;
-        DONE
+        break;
 
     OPCODE(28)              /* PLP */
         PLP;
         /*! CPUCHECKIRQ;*/
-        DONE
+        break;
 
     OPCODE(29)              /* AND #ab */
         AND(dGetByte(PC++));
-        DONE
+        break;
 
     OPCODE(2a)              /* ROL */
         Z = N = (A << 1) | C;
         C = (A & 0x80) ? 1 : 0;
         A = Z;
-        DONE
+        break;
 
     OPCODE(2c)              /* BIT abcd */
         ABSOLUTE;
         N = GetByte(addr);
         V = N & 0x40;
         Z = (A & N);
-        DONE
+        break;
 
     OPCODE(2d)              /* AND abcd */
         ABSOLUTE;
         AND(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(2e)              /* ROL abcd */
         ABSOLUTE;
@@ -439,7 +437,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         Z = N = (data << 1) | C;
         C = (data & 0x80) ? 1 : 0;
         PutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(2f)              /* RLA abcd [unofficial - ROL Mem, then AND with A] */
         ABSOLUTE;
@@ -452,7 +450,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         INDIRECT_Y;
         NCYCLES_Y;
         AND(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(33)              /* RLA (ab),y [unofficial - ROL Mem, then AND with A] */
         INDIRECT_Y;
@@ -461,7 +459,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
     OPCODE(35)              /* AND ab,x */
         ZPAGE_X;
         AND(dGetByte(addr));
-        DONE
+        break;
 
     OPCODE(36)              /* ROL ab,x */
         ZPAGE_X;
@@ -469,7 +467,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         Z = N = (data << 1) | C;
         C = (data & 0x80) ? 1 : 0;
         dPutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(37)              /* RLA zpage,x [unofficial - ROL Mem, then AND with A] */
         ZPAGE_X;
@@ -477,13 +475,13 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 
     OPCODE(38)              /* SEC */
         C = 1;
-        DONE
+        break;
 
     OPCODE(39)              /* AND abcd,y */
         ABSOLUTE_Y;
         NCYCLES_Y;
         AND(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(3b)              /* RLA abcd,y [unofficial - ROL Mem, then AND with A] */
         ABSOLUTE_Y;
@@ -493,7 +491,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         ABSOLUTE_X;
         NCYCLES_X;
         AND(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(3e)              /* ROL abcd,x */
         ABSOLUTE_X;
@@ -501,7 +499,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         Z = N = (data << 1) | C;
         C = (data & 0x80) ? 1 : 0;
         PutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(3f)              /* RLA abcd,x [unofficial - ROL Mem, then AND with A] */
         ABSOLUTE_X;
@@ -512,12 +510,12 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         data = PL;
         PC = (PL << 8) | data;
         /*! CPUCHECKIRQ;*/
-        DONE
+        break;
 
     OPCODE(41)              /* EOR (ab,x) */
         INDIRECT_X;
         EOR(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(43)              /* LSE (ab,x) [unofficial - LSR then EOR result with A] */
         INDIRECT_X;
@@ -528,12 +526,12 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         data >>= 1;
         PutByte(addr, data);
         Z = N = A ^= data;
-        DONE
+        break;
 
     OPCODE(45)              /* EOR ab */
         ZPAGE;
         EOR(dGetByte(addr));
-        DONE
+        break;
 
     OPCODE(46)              /* LSR ab */
         ZPAGE;
@@ -542,7 +540,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         Z = data >> 1;
         N = 0;
         dPutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(47)              /* LSE zpage [unofficial - LSR then EOR result with A] */
         ZPAGE;
@@ -553,35 +551,35 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         data = data >> 1;
         dPutByte(addr, data);
         Z = N = A ^= data;
-        DONE
+        break;
 
     OPCODE(48)              /* PHA */
         PH(A);
-        DONE
+        break;
 
     OPCODE(49)              /* EOR #ab */
         EOR(dGetByte(PC++));
-        DONE
+        break;
 
     OPCODE(4a)              /* LSR */
         C = A & 1;
         Z = N = A >>= 1;
-        DONE
+        break;
 
     OPCODE(4b)              /* ALR #ab [unofficial - Acc AND Data, LSR result] */
         data = A & dGetByte(PC++);
         C = data & 1;
         Z = N = A = (data >> 1);
-        DONE
+        break;
 
     OPCODE(4c)              /* JMP abcd */
         PC = dGetWord(PC);
-        DONE
+        break;
 
     OPCODE(4d)              /* EOR abcd */
         ABSOLUTE;
         EOR(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(4e)              /* LSR abcd */
         ABSOLUTE;
@@ -590,7 +588,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         Z = data >> 1;
         N = 0;
         PutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(4f)              /* LSE abcd [unofficial - LSR then EOR result with A] */
         ABSOLUTE;
@@ -603,7 +601,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         INDIRECT_Y;
         NCYCLES_Y;
         EOR(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(53)              /* LSE (ab),y [unofficial - LSR then EOR result with A] */
         INDIRECT_Y;
@@ -612,7 +610,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
     OPCODE(55)              /* EOR ab,x */
         ZPAGE_X;
         EOR(dGetByte(addr));
-        DONE
+        break;
 
     OPCODE(56)              /* LSR ab,x */
         ZPAGE_X;
@@ -621,7 +619,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         Z = data >> 1;
         N = 0;
         dPutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(57)              /* LSE zpage,x [unofficial - LSR then EOR result with A] */
         ZPAGE_X;
@@ -630,13 +628,13 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
     OPCODE(58)              /* CLI */
         ClrI;
         /*! CPUCHECKIRQ;*/
-        DONE
+        break;
 
     OPCODE(59)              /* EOR abcd,y */
         ABSOLUTE_Y;
         NCYCLES_Y;
         EOR(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(5b)              /* LSE abcd,y [unofficial - LSR then EOR result with A] */
         ABSOLUTE_Y;
@@ -646,7 +644,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         ABSOLUTE_X;
         NCYCLES_X;
         EOR(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(5e)              /* LSR abcd,x */
         ABSOLUTE_X;
@@ -655,7 +653,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         Z = data >> 1;
         N = 0;
         PutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(5f)              /* LSE abcd,x [unofficial - LSR then EOR result with A] */
         ABSOLUTE_X;
@@ -667,7 +665,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 
         data = PL;
         PC = ((PL << 8) | data) + 1;
-        DONE
+        break;
 
     OPCODE(61)              /* ADC (ab,x) */
         INDIRECT_X;
@@ -701,7 +699,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         Z = N = (C << 7) | (data >> 1);
         C = data & 1;
         dPutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(67)              /* RRA zpage [unofficial - ROR Mem, then ADC to Acc] */
         ZPAGE;
@@ -721,7 +719,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 
     OPCODE(68)              /* PLA */
         Z = N = A = PL;
-        DONE
+        break;
 
     OPCODE(69)              /* ADC #ab */
         data = dGetByte(PC++);
@@ -731,7 +729,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         Z = N = (C << 7) | (A >> 1);
         C = A & 1;
         A = Z;
-        DONE
+        break;
 
     OPCODE(6b)              /* ARR #ab [unofficial - Acc AND Data, ROR result] */
         /* It does some 'BCD fixup' if D flag is set */
@@ -759,7 +757,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
             C = (A & 0x40) >> 6;
             V = ((A >> 6) ^ (A >> 5)) & 1;
         }
-        DONE
+        break;
 
     OPCODE(6c)              /* JMP (abcd) */
         addr = dGetWord(PC);
@@ -767,7 +765,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
             PC = (dGetByte(addr & ~0xff) << 8) | dGetByte(addr);
         else
             PC = dGetWord(addr);
-        DONE
+        break;
 
     OPCODE(6d)              /* ADC abcd */
         ABSOLUTE;
@@ -780,7 +778,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         Z = N = (C << 7) | (data >> 1);
         C = data & 1;
         PutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(6f)              /* RRA abcd [unofficial - ROR Mem, then ADC to Acc] */
         ABSOLUTE;
@@ -810,7 +808,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         Z = N = (C << 7) | (data >> 1);
         C = data & 1;
         dPutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(77)              /* RRA zpage,x [unofficial - ROR Mem, then ADC to Acc] */
         ZPAGE_X;
@@ -818,7 +816,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 
     OPCODE(78)              /* SEI */
         SetI;
-        DONE
+        break;
 
     OPCODE(79)              /* ADC abcd,y */
         ABSOLUTE_Y;
@@ -842,7 +840,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         Z = N = (C << 7) | (data >> 1);
         C = data & 1;
         PutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(7f)              /* RRA abcd,x [unofficial - ROR Mem, then ADC to Acc] */
         ABSOLUTE_X;
@@ -851,70 +849,70 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
     OPCODE(81)              /* STA (ab,x) */
         INDIRECT_X;
         PutByte(addr, A);
-        DONE
+        break;
 
     /* AXS doesn't change flags and SAX is better name for it (Fox) */
     OPCODE(83)              /* SAX (ab,x) [unofficial - Store result A AND X */
         INDIRECT_X;
         data = A & X;
         PutByte(addr, data);
-        DONE
+        break;
 
     OPCODE(84)              /* STY ab */
         ZPAGE;
         dPutByte(addr, Y);
-        DONE
+        break;
 
     OPCODE(85)              /* STA ab */
         ZPAGE;
         dPutByte(addr, A);
-        DONE
+        break;
 
     OPCODE(86)              /* STX ab */
         ZPAGE;
         dPutByte(addr, X);
-        DONE
+        break;
 
     OPCODE(87)              /* SAX zpage [unofficial - Store result A AND X] */
         ZPAGE;
         data = A & X;
         dPutByte(addr, data);
-        DONE
+        break;
 
     OPCODE(88)              /* DEY */
         Z = N = --Y;
-        DONE
+        break;
 
     OPCODE(8a)              /* TXA */
         Z = N = A = X;
-        DONE
+        break;
 
     OPCODE(8b)              /* ANE #ab [unofficial - A AND X AND (Mem OR $EF) to Acc] (Fox) */
         data = dGetByte(PC++);
         N = Z = A & X & data;
         A &= X & (data | 0xef);
-        DONE
+        break;
 
     OPCODE(8c)              /* STY abcd */
         ABSOLUTE;
         PutByte(addr, Y);
-        DONE
+        break;
 
     OPCODE(8d)              /* STA abcd */
         ABSOLUTE;
         PutByte(addr, A);
-        DONE
+        break;
 
     OPCODE(8e)              /* STX abcd */
         ABSOLUTE;
         PutByte(addr, X);
-        DONE
+        break;
 
     OPCODE(8f)              /* SAX abcd [unofficial - Store result A AND X] */
         ABSOLUTE;
         data = A & X;
         PutByte(addr, data);
-        DONE
+        break;
 
     OPCODE(90)              /* BCC */
         BRANCH(!C)
@@ -922,7 +920,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
     OPCODE(91)              /* STA (ab),y */
         INDIRECT_Y;
         PutByte(addr, A);
-        DONE
+        break;
 
     OPCODE(93)              /* SHA (ab),y [unofficial, UNSTABLE - Store A AND X AND (H+1) ?] (Fox) */
         /* It seems previous memory value is important - also in 9f */
@@ -931,41 +929,41 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         data = A & X & (data + 1);
         addr = dGetWord(addr) + Y;
         PutByte(addr, data);
-        DONE
+        break;
 
     OPCODE(94)              /* STY ab,x */
         ZPAGE_X;
         dPutByte(addr, Y);
-        DONE
+        break;
 
     OPCODE(95)              /* STA ab,x */
         ZPAGE_X;
         dPutByte(addr, A);
-        DONE
+        break;
 
     OPCODE(96)              /* STX ab,y */
         ZPAGE_Y;
         PutByte(addr, X);
-        DONE
+        break;
 
     OPCODE(97)              /* SAX zpage,y [unofficial - Store result A AND X] */
         ZPAGE_Y;
         data = A & X;
         dPutByte(addr, data);
-        DONE
+        break;
 
     OPCODE(98)              /* TYA */
         Z = N = A = Y;
-        DONE
+        break;
 
     OPCODE(99)              /* STA abcd,y */
         ABSOLUTE_Y;
         PutByte(addr, A);
-        DONE
+        break;
 
     OPCODE(9a)              /* TXS */
         S = X;
-        DONE
+        break;
 
     OPCODE(9b)              /* SHS abcd,y [unofficial, UNSTABLE] (Fox) */
         /* Transfer A AND X to S, then store S AND (H+1)] */
@@ -976,7 +974,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         data = S & ((addr >> 8) + 1);
         addr += Y;
         PutByte(addr, data);
-        DONE
+        break;
 
     OPCODE(9c)              /* SHY abcd,x [unofficial - Store Y and (H+1)] (Fox) */
         /* Seems to be stable */
@@ -986,12 +984,12 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         data = Y & ((UBYTE) ((addr >> 8) + 1));
         addr += X;
         PutByte(addr, data);
-        DONE
+        break;
 
     OPCODE(9d)              /* STA abcd,x */
         ABSOLUTE_X;
         PutByte(addr, A);
-        DONE
+        break;
 
     OPCODE(9e)              /* SHX abcd,y [unofficial - Store X and (H+1)] (Fox) */
         /* Seems to be stable */
@@ -1001,7 +999,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         data = X & ((UBYTE) ((addr >> 8) + 1));
         addr += Y;
         PutByte(addr, data);
-        DONE
+        break;
 
     OPCODE(9f)              /* SHA abcd,y [unofficial, UNSTABLE - Store A AND X AND (H+1) ?] (Fox) */
         addr = dGetWord(PC);
@@ -1009,81 +1007,81 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         data = A & X & ((addr >> 8) + 1);
         addr += Y;
         PutByte(addr, data);
-        DONE
+        break;
 
     OPCODE(a0)              /* LDY #ab */
         LDY(dGetByte(PC++));
-        DONE
+        break;
 
     OPCODE(a1)              /* LDA (ab,x) */
         INDIRECT_X;
         LDA(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(a2)              /* LDX #ab */
         LDX(dGetByte(PC++));
-        DONE
+        break;
 
     OPCODE(a3)              /* LAX (ind,x) [unofficial] */
         INDIRECT_X;
         Z = N = X = A = GetByte(addr);
-        DONE
+        break;
 
     OPCODE(a4)              /* LDY ab */
         ZPAGE;
         LDY(dGetByte(addr));
-        DONE
+        break;
 
     OPCODE(a5)              /* LDA ab */
         ZPAGE;
         LDA(dGetByte(addr));
-        DONE
+        break;
 
     OPCODE(a6)              /* LDX ab */
         ZPAGE;
         LDX(dGetByte(addr));
-        DONE
+        break;
 
     OPCODE(a7)              /* LAX zpage [unofficial] */
         ZPAGE;
         Z = N = X = A = GetByte(addr);
-        DONE
+        break;
 
     OPCODE(a8)              /* TAY */
         Z = N = Y = A;
-        DONE
+        break;
 
     OPCODE(a9)              /* LDA #ab */
         LDA(dGetByte(PC++));
-        DONE
+        break;
 
     OPCODE(aa)              /* TAX */
         Z = N = X = A;
-        DONE
+        break;
 
     OPCODE(ab)              /* ANX #ab [unofficial - AND #ab, then TAX] */
         Z = N = X = A &= dGetByte(PC++);
-        DONE
+        break;
 
     OPCODE(ac)              /* LDY abcd */
         ABSOLUTE;
         LDY(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(ad)              /* LDA abcd */
         ABSOLUTE;
         LDA(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(ae)              /* LDX abcd */
         ABSOLUTE;
         LDX(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(af)              /* LAX absolute [unofficial] */
         ABSOLUTE;
         Z = N = X = A = GetByte(addr);
-        DONE
+        break;
 
     OPCODE(b0)              /* BCS */
         BRANCH(C)
@@ -1092,46 +1090,46 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         INDIRECT_Y;
         NCYCLES_Y;
         LDA(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(b3)              /* LAX (ind),y [unofficial] */
         INDIRECT_Y;
         Z = N = X = A = GetByte(addr);
-        DONE
+        break;
 
     OPCODE(b4)              /* LDY ab,x */
         ZPAGE_X;
         LDY(dGetByte(addr));
-        DONE
+        break;
 
     OPCODE(b5)              /* LDA ab,x */
         ZPAGE_X;
         LDA(dGetByte(addr));
-        DONE
+        break;
 
     OPCODE(b6)              /* LDX ab,y */
         ZPAGE_Y;
         LDX(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(b7)              /* LAX zpage,y [unofficial] */
         ZPAGE_Y;
         Z = N = X = A = GetByte(addr);
-        DONE
+        break;
 
     OPCODE(b8)              /* CLV */
         V = 0;
-        DONE
+        break;
 
     OPCODE(b9)              /* LDA abcd,y */
         ABSOLUTE_Y;
         NCYCLES_Y;
         LDA(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(ba)              /* TSX */
         Z = N = X = S;
-        DONE
+        break;
 
 /* AXA [unofficial - original decode by R.Sterba and R.Petruzela 15.1.1998 :-)]
    AXA - this is our new imaginative name for instruction with opcode hex BB.
@@ -1144,39 +1142,39 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
     OPCODE(bb)              /* LAS abcd,y [unofficial - AND S with Mem, transfer to A and X (Fox) */
         ABSOLUTE_Y;
         Z = N = A = X = S &= GetByte(addr);
-        DONE
+        break;
 
     OPCODE(bc)              /* LDY abcd,x */
         ABSOLUTE_X;
         NCYCLES_X;
         LDY(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(bd)              /* LDA abcd,x */
         ABSOLUTE_X;
         NCYCLES_X;
         LDA(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(be)              /* LDX abcd,y */
         ABSOLUTE_Y;
         NCYCLES_Y;
         LDX(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(bf)              /* LAX absolute,y [unofficial] */
         ABSOLUTE_Y;
         Z = N = X = A = GetByte(addr);
-        DONE
+        break;
 
     OPCODE(c0)              /* CPY #ab */
         CPY(dGetByte(PC++));
-        DONE
+        break;
 
     OPCODE(c1)              /* CMP (ab,x) */
         INDIRECT_X;
         CMP(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(c3)              /* DCM (ab,x) [unofficial - DEC Mem then CMP with Acc] */
         INDIRECT_X;
@@ -1186,23 +1184,23 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         data--;
         PutByte(addr, data);
         CMP(data);
-        DONE
+        break;
 
     OPCODE(c4)              /* CPY ab */
         ZPAGE;
         CPY(dGetByte(addr));
-        DONE
+        break;
 
     OPCODE(c5)              /* CMP ab */
         ZPAGE;
         CMP(dGetByte(addr));
-        DONE
+        break;
 
     OPCODE(c6)              /* DEC ab */
         ZPAGE;
         Z = N = dGetByte(addr) - 1;
         dPutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(c7)              /* DCM zpage [unofficial - DEC Mem then CMP with Acc] */
         ZPAGE;
@@ -1211,19 +1209,19 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         data = dGetByte(addr) - 1;
         dPutByte(addr, data);
         CMP(data);
-        DONE
+        break;
 
     OPCODE(c8)              /* INY */
         Z = N = ++Y;
-        DONE
+        break;
 
     OPCODE(c9)              /* CMP #ab */
         CMP(dGetByte(PC++));
-        DONE
+        break;
 
     OPCODE(ca)              /* DEX */
         Z = N = --X;
-        DONE
+        break;
 
     OPCODE(cb)              /* SBX #ab [unofficial - store (A AND X - Mem) in X] (Fox) */
         X &= A;
@@ -1231,24 +1229,24 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         C = X >= data;
         /* MPC 05/24/00 */
         Z = N = X -= data;
-        DONE
+        break;
 
     OPCODE(cc)              /* CPY abcd */
         ABSOLUTE;
         CPY(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(cd)              /* CMP abcd */
         ABSOLUTE;
         CMP(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(ce)              /* DEC abcd */
         ABSOLUTE;
         RMW_GetByte(Z, addr);
         N = --Z;
         PutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(cf)              /* DCM abcd [unofficial - DEC Mem then CMP with Acc] */
         ABSOLUTE;
@@ -1261,7 +1259,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         INDIRECT_Y;
         NCYCLES_Y;
         CMP(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(d3)              /* DCM (ab),y [unofficial - DEC Mem then CMP with Acc] */
         INDIRECT_Y;
@@ -1272,13 +1270,13 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         CMP(dGetByte(addr));
         Z = N = A - data;
         C = (A >= data);
-        DONE
+        break;
 
     OPCODE(d6)              /* DEC ab,x */
         ZPAGE_X;
         Z = N = dGetByte(addr) - 1;
         dPutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(d7)              /* DCM zpage,x [unofficial - DEC Mem then CMP with Acc] */
         ZPAGE_X;
@@ -1286,13 +1284,13 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 
     OPCODE(d8)              /* CLD */
         ClrD;
-        DONE
+        break;
 
     OPCODE(d9)              /* CMP abcd,y */
         ABSOLUTE_Y;
         NCYCLES_Y;
         CMP(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(db)              /* DCM abcd,y [unofficial - DEC Mem then CMP with Acc] */
         ABSOLUTE_Y;
@@ -1302,14 +1300,14 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         ABSOLUTE_X;
         NCYCLES_X;
         CMP(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(de)              /* DEC abcd,x */
         ABSOLUTE_X;
         RMW_GetByte(Z, addr);
         N = --Z;
         PutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(df)              /* DCM abcd,x [unofficial - DEC Mem then CMP with Acc] */
         ABSOLUTE_X;
@@ -1317,7 +1315,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 
     OPCODE(e0)              /* CPX #ab */
         CPX(dGetByte(PC++));
-        DONE
+        break;
 
     OPCODE(e1)              /* SBC (ab,x) */
         INDIRECT_X;
@@ -1336,7 +1334,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
     OPCODE(e4)              /* CPX ab */
         ZPAGE;
         CPX(dGetByte(addr));
-        DONE
+        break;
 
     OPCODE(e5)              /* SBC ab */
         ZPAGE;
@@ -1347,7 +1345,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         ZPAGE;
         Z = N = dGetByte(addr) + 1;
         dPutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(e7)              /* INS zpage [unofficial - INC Mem then SBC with Acc] */
         ZPAGE;
@@ -1359,7 +1357,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 
     OPCODE(e8)              /* INX */
         Z = N = ++X;
-        DONE
+        break;
 
     OPCODE(e9)              /* SBC #ab */
     OPCODE(eb)              /* SBC #ab [unofficial] */
@@ -1373,12 +1371,12 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
     OPCODE(7a)
     OPCODE(da)
     OPCODE(fa)
-        DONE
+        break;
 
     OPCODE(ec)              /* CPX abcd */
         ABSOLUTE;
         CPX(GetByte(addr));
-        DONE
+        break;
 
     OPCODE(ed)              /* SBC abcd */
         ABSOLUTE;
@@ -1390,7 +1388,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         RMW_GetByte(Z, addr);
         N = ++Z;
         PutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(ef)              /* INS abcd [unofficial - INC Mem then SBC with Acc] */
         ABSOLUTE;
@@ -1418,7 +1416,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         ZPAGE_X;
         Z = N = dGetByte(addr) + 1;
         dPutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(f7)              /* INS zpage,x [unofficial - INC Mem then SBC with Acc] */
         ZPAGE_X;
@@ -1426,7 +1424,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 
     OPCODE(f8)              /* SED */
         SetD;
-        DONE
+        break;
 
     OPCODE(f9)              /* SBC abcd,y */
         ABSOLUTE_Y;
@@ -1449,7 +1447,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         RMW_GetByte(Z, addr);
         N = ++Z;
         PutByte(addr, Z);
-        DONE
+        break;
 
     OPCODE(ff)              /* INS abcd,x [unofficial - INC Mem then SBC with Acc] */
         ABSOLUTE_X;
@@ -1458,12 +1456,12 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
     OPCODE(d2)              /* ESCRTS #ab (CIM) - on Atari is here instruction CIM [unofficial] !RS! */
 
         SA_C6502_RETURN;
-        DONE
+        break;
 
     OPCODE(f2)              /* ESC #ab (CIM) - on Atari is here instruction CIM [unofficial] !RS! */
 
         SA_C6502_RETURN;
-        DONE
+        break;
 
     OPCODE(02)              /* CIM [unofficial - crash intermediate] */
     OPCODE(12)
@@ -1477,7 +1475,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
     OPCODE(b2)
 
         SA_C6502_RETURN;
-        DONE
+        break;
 
 /* ---------------------------------------------- */
 /* ADC and SBC routines */
@@ -1506,7 +1504,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
             C = tmp > 0xff;
             A = (UBYTE) tmp;
         }
-        DONE
+        break;
 
     sbc:
         if (!(regP & D_FLAG)) {
@@ -1533,7 +1531,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 
             A = (ah << 4) | (al & 0x0f);    /* Compose result */
         }
-        DONE
+        break;
 
     }
 

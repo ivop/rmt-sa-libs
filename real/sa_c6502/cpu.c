@@ -1,7 +1,7 @@
 /* Crippled version for the sa_c6502.dll use only */
 /*  CPU.C  */
 /*
-1.  In zeropage indirect mode, address can be fetched from 0x00ff and 0x0100.
+ BUG: In zeropage indirect mode, address can be fetched from 0x00ff and 0x0100.
  */
 
 #include <stdio.h>

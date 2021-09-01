@@ -1475,8 +1475,6 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
     OPCODE(72)
     OPCODE(92)
     OPCODE(b2)
-    /* OPCODE(d2) Used for ESCRTS #ab (CIM) */
-    /* OPCODE(f2) Used for ESC #ab (CIM) */
 
         SA_C6502_RETURN;
         DONE

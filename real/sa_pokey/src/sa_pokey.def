@@ -1,0 +1,10 @@
+LIBRARY   SA_POKEY
+
+EXPORTS
+	Pokey_Initialise	@1
+	Pokey_SoundInit 	@2
+	Pokey_Process		@3
+	Pokey_GetByte		@4
+	Pokey_PutByte		@5
+	Pokey_About 		@6
+

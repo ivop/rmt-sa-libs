@@ -38,7 +38,6 @@ void __declspec(dllexport) C6502_Initialise(BYTE* memory)
 
 #define PHW(x) PH((x)>>8); PH((x) & 0xff)
 
-// XXX remove?
 UBYTE regP;                     //* Processor Status Byte (Partial) * /
 
 /*

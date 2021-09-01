@@ -4,9 +4,6 @@
 #ifndef __POKEY__
 #define __POKEY__
 
-//! #include "atari.h"
-
-//!
 #define UBYTE unsigned char
 #define UWORD unsigned short
 #define SWORD short
@@ -50,32 +47,13 @@
 
 #define _POKEY2 0x10			/* offset to second pokey chip (STEREO expansion) */
 
-#ifdef STEREO
 extern int stereo_enabled;
-#endif
-
-/*
-extern UBYTE KBCODE;
-extern UBYTE IRQST;
-extern UBYTE IRQEN;
-extern UBYTE SKSTAT;
-extern int DELAYED_SERIN_IRQ;
-extern int DELAYED_SEROUT_IRQ;
-extern int DELAYED_XMTDONE_IRQ;
-
-extern UBYTE POT_input[8];
-*/
 
 UBYTE POKEY_GetByte(UWORD addr);
 //! void POKEY_PutByte(UWORD addr, UBYTE byte);
 //! void POKEY_Initialise(int *argc, char *argv[]);
 void POKEY_Frame(void);
 void POKEY_Scanline(void);
-
-#ifdef __PLUS
-ULONG POKEY_GetRandomCounter( void );
-void  POKEY_SetRandomCounter( ULONG ulValue );
-#endif /*__PLUS*/
 
 /* CONSTANT DEFINITIONS */
 

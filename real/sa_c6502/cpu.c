@@ -2,7 +2,6 @@
 /*  CPU.C  */
 /*
 1.  In zeropage indirect mode, address can be fetched from 0x00ff and 0x0100.
-2.  BRK bug is not emulated.
  */
 
 #include <stdio.h>

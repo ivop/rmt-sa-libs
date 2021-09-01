@@ -1,7 +1,11 @@
-// sa_pokey.cpp : Defines the entry point for the DLL application.
-//
+// sa_pokey.c : Defines the entry point for the DLL application.
 
-#include "stdafx.h"
+#if _MSC_VER > 1000
+#pragma once
+#endif // _MSC_VER > 1000
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 BOOL APIENTRY DllMain( HANDLE hModule, 
                        DWORD  ul_reason_for_call, 

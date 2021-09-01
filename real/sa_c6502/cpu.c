@@ -31,16 +31,6 @@ void __declspec(dllexport) C6502_Initialise(BYTE* memory)
 
 #include "cpu.h"
 
-
-/*
-   ==========================================================
-   Emulated Registers and Flags are kept local to this module
-   ==========================================================
- */
-
-#define UPDATE_GLOBAL_REGS regPC=PC;regS=S;regA=A;regX=X;regY=Y
-#define UPDATE_LOCAL_REGS PC=regPC;S=regS;A=regA;X=regX;Y=regY
-
 #define PL dGetByte(0x0100 + ++S)
 #define PH(x) dPutByte(0x0100 + S--, x)
 
@@ -151,43 +141,11 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
     UBYTE data;
 
 
-    //! SA_INIT
     if (!g_memory) return -1;
     
     SA_C6502_INIT;
 
-
-/*
-   This used to be in the main loop but has been removed to improve
-   execution speed. It does not seem to have any adverse effect on
-   the emulation for two reasons:-
-
-   1. NMI's will can only be raised in atari_custom.c - there is
-   no way an NMI can be generated whilst in this routine.
-
-   2. The timing of the IRQs are not that critical.
- */
-
-    /*
-    if (wsync_halt) {
-        if (limit<WSYNC_C)
-            return;
-        xpos = WSYNC_C;
-        wsync_halt = 0;
-    }
-    */
-
-    //! xpos_limit = limit;         /* needed for WSYNC store inside ANTIC */
-
-    /*! UPDATE_LOCAL_REGS;*/
-
-    /*! CPUCHECKIRQ;*/
-
-/*
-   =====================================
-   Extract Address if Required by Opcode
-   =====================================
- */
+// Addressing modes
 
 #define ABSOLUTE    addr=dGetWord(PC);PC+=2;
 #define ZPAGE       addr=dGetByte(PC++);
@@ -198,7 +156,6 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 #define ZPAGE_X     addr=(UBYTE)(dGetByte(PC++)+X);
 #define ZPAGE_Y     addr=(UBYTE)(dGetByte(PC++)+Y);
 
-    //!while (xpos < xpos_limit) {
     xpos = 0;
     while (xpos < *maxcycles) {
         insn = dGetByte(PC++);

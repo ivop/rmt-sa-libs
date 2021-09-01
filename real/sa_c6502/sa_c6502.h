@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-#define TRUE	1
-#define FALSE	0
+#define TRUE    1
+#define FALSE   0
 
 #define UWORD   uint16_t
 #define UBYTE   uint8_t

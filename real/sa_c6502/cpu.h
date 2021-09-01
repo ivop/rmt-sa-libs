@@ -25,8 +25,8 @@ void NMI(void);
 
 #ifdef CPUASS
 extern void CPU_INIT(void);
-extern void CPUGET(void);		/* put from CCR, N & Z FLAG into regP */
-extern void CPUPUT(void);		/* put from regP into CCR, N & Z FLAG */
+extern void CPUGET(void);       /* put from CCR, N & Z FLAG into regP */
+extern void CPUPUT(void);       /* put from regP into CCR, N & Z FLAG */
 #endif
 
 /*

@@ -1,79 +1,15 @@
 /* Crippled version for the sa_c6502.dll use only */
 /*	CPU.C  */
 /*
-	Compilation options
-	===================
-	By default, goto * is used.
-	Use -DNO_GOTO to force using switch().
-
-	Limitations
-	===========
-
-	The 6502 emulation ignores memory attributes for
-	instruction fetch. This is because the instruction
-	must come from either RAM or ROM. A program that
-	executes instructions from within hardware
-	addresses will fail since there is never any
-	usable code there.
-
-	The 6502 emulation also ignores memory attributes
-	for accesses to page 0 and page 1.
-
-	Known bugs
-	==========
-
 1.	In zeropage indirect mode, address can be fetched from 0x00ff and 0x0100.
-
-2.	On a x86, memory[0x10000] can be accessed.
-
-3.	BRK bug is not emulated.
-
-
-	Ideas for Speed Improvements
-	============================
-
-1.	Join N and Z flags
-	Most instructions set both of them, according to the result.
-	Only few instructions set them independently:
-	with BIT, PLP and RTI there's possibility that both N and Z are set.
-	Let's make UWORD variable NZ that way:
-
-	<-msb--><-lsb-->
-	-------NN.......
-	        <--Z--->
-
-	6502's Z flag is set if lsb of NZ is zero.
-	6502's N flag is set if any of bits 7 and 8 is set (test with mask 0x0180).
-
-	With this, we change all Z = N = ... to NZ = ..., which should write
-	a byte zero-extended to a word - isn't this faster than writing two bytes?
-	On PLP and RTI let's NZ = ((flags & 0x82) ^ 2) << 1;
-
-	We can even join more flags. How about this:
-
-	<-msb--><-lsb-->
-	NV11DI-CN.......
-	        <--Z--->
-
-2.	Remove cycle table and add cycles in every instruction.
-
-3.	Make PC UBYTE *, pointing directly into memory.
-
-4.	Use 'instruction queue' - fetch a longword of 6502 code at once,
-	then only shift right this register. But we have to swap bytes
-	on a big-endian cpu. We also should re-fetch on a jump.
-
-5.	Make X and Y registers UWORD or unsigned int, so they don't need to
-	be zero-extended while computing address in indexed mode.
-
+2.	BRK bug is not emulated.
  */
 
 #include <stdio.h>
 #include <stdlib.h>	/* for exit() */
 #include <string.h>	/* for memmove() */
 
-//! SA_C6502 pridavky
-#include "sa_c6502.h"
+#include "sa_c6502.h"       // our sa_c6502 pridavky hook ;)
 
 UBYTE* g_memory = NULL;
 int xpos=0;
@@ -86,7 +22,6 @@ int xpos=0;
 #define dGetWordAligned(adr) ( *(WORD*)(g_memory+adr) )
 #define dGetWord(adr)		 ( *(WORD*)(g_memory+adr) )
 
-//int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yreg, int* maxcycles)
 #define SA_C6502_INIT	 { PC=*adr; A=*areg; X=*xreg; Y=*yreg; regP=0x34; S=0xff; }
 #define SA_C6502_RETURN  { *adr=PC; *areg=A; *xreg=X; *yreg=Y; *maxcycles=(*maxcycles-xpos); return insn; }
 
@@ -95,43 +30,8 @@ void __declspec(dllexport) C6502_Initialise(BYTE* memory)
 	g_memory = memory;
 }
 
-
-
-//! #include "antic.h"
-//! #include "atari.h"
-//! #include "config.h"
 #include "cpu.h"
-//! #include "memory.h"
-//! #include "statesav.h"
-//! #include "ui.h"
 
-
-#ifdef CPUASS
-extern UBYTE IRQ;
-
-#ifdef PAGED_MEM
-#error cpu_m68k.s cannot work with paged memory
-#endif
-
-/*
-void CPU_Initialise()
-{
-	CPU_INIT();
-}
-
-void CPU_GetStatus(void)
-{
-	CPUGET();
-}
-
-void CPU_PutStatus(void)
-{
-	CPUPUT();
-}
-*/
-
-
-#else
 
 /*
    ==========================================================
@@ -145,62 +45,12 @@ void CPU_PutStatus(void)
 #define PL dGetByte(0x0100 + ++S)
 #define PH(x) dPutByte(0x0100 + S--, x)
 
-#ifndef NO_CYCLE_EXACT
-#ifdef PAGED_MEM
-#define RMW_GetByte(x,addr) x = GetByte(addr); if ((addr & 0xef1f) == 0xc01a) { xpos--; PutByte(addr,x); xpos++; }
-#else
-#define RMW_GetByte(x,addr)	if (attrib[addr] == HARDWARE) { x = Atari800_GetByte(addr); if ((addr & 0xef1f) == 0xc01a) { xpos--; Atari800_PutByte(addr, x); xpos++; }} else x = memory[addr];
-#endif /* PAGED_MEM */
-#else
 #define RMW_GetByte(x,addr) x = GetByte(addr);
-#endif /* NO_CYCLE_EXACT */
 
 #define PHW(x) PH((x)>>8); PH((x) & 0xff)
 
-/*
-UWORD regPC;
-UBYTE regA;
-*/
+// XXX remove?
 UBYTE regP;						//* Processor Status Byte (Partial) * /
-/*
-UBYTE regS;
-UBYTE regX;
-UBYTE regY;
-
-static UBYTE N;					//* bit7 zero (0) or bit 7 non-zero (1) * /
-static UBYTE Z;					//* zero (0) or non-zero (1) * /
-static UBYTE V;
-static UBYTE C;					//* zero (0) or one(1) * /
-*/
-
-/*
-   #define PROFILE
- */
-
-#ifdef TRACE
-extern int tron;
-#endif
-
-/*
- * The following array is used for 6502 instruction profiling
- */
-#ifdef PROFILE
-int instruction_count[256];
-#endif
-
-//! UBYTE IRQ;
-
-#ifdef MONITOR_BREAK
-UWORD remember_PC[REMEMBER_PC_STEPS];
-extern UWORD break_addr;
-UWORD remember_JMP[REMEMBER_JMP_STEPS];
-extern UBYTE break_step;
-extern UBYTE break_ret;
-extern UBYTE break_cim;
-extern UBYTE break_here;
-extern int ret_nesting;
-extern int brkhere;
-#endif
 
 /*
    ===============================================================
@@ -210,53 +60,6 @@ extern int brkhere;
    ===============================================================
  */
 
-/*
-void CPU_GetStatus(void)
-{
-	if (N)
-		SetN;
-	else
-		ClrN;
-
-	if (Z)
-		ClrZ;
-	else
-		SetZ;
-
-	if (V)
-		SetV;
-	else
-		ClrV;
-
-	if (C)
-		SetC;
-	else
-		ClrC;
-}
-
-void CPU_PutStatus(void)
-{
-	if (regP & N_FLAG)
-		N = 0x80;
-	else
-		N = 0x00;
-
-	if (regP & Z_FLAG)
-		Z = 0;
-	else
-		Z = 1;
-
-	if (regP & V_FLAG)
-		V = 1;
-	else
-		V = 0;
-
-	if (regP & C_FLAG)
-		C = 1;
-	else
-		C = 0;
-}
-*/
 
 #define AND(t_data) data = t_data; Z = N = A &= data
 #define CMP(t_data) data = t_data; Z = N = A - data; C = (A >= data)
@@ -285,53 +88,6 @@ void CPU_PutStatus(void)
 			C = (data & 0x01); \
 			regP = (data & 0x3c) | 0x30;
 
-/*!
-void NMI(void)
-{
-	UBYTE S = regS;
-	UBYTE data;
-
-	PHW(regPC);
-	PHPB0;
-	SetI;
-	regPC = dGetWordAligned(0xfffa);
-	regS = S;
-	xpos += 7;		//* getting interrupt takes 7 cycles * /
-#ifdef MONITOR_BREAK
-	ret_nesting++;
-#endif
-}
-*/
-
-/* check pending IRQ, helps in (not only) Lucasfilm games */
-#ifdef MONITOR_BREAK
-#define CPUCHECKIRQ							\
-{									\
-	if (IRQ) {							\
-		if (!(regP & I_FLAG)) {					\
-			PHW(PC);					\
-			PHPB0;						\
-			SetI;						\
-			PC = dGetWordAligned(0xfffe);				\
-			xpos += 7;					\
-			ret_nesting+=1;					\
-		}							\
-	}								\
-}
-#else
-#define CPUCHECKIRQ							\
-{									\
-	if (IRQ) {							\
-		if (!(regP & I_FLAG)) {					\
-			PHW(PC);					\
-			PHPB0;						\
-			SetI;						\
-			PC = dGetWordAligned(0xfffe);				\
-			xpos += 7;					\
-		}							\
-	}								\
-}
-#endif
 
 /*	0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
 int cycles[256] =
@@ -378,95 +134,8 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 {
 	UBYTE insn;
 
-#ifdef NO_GOTO
 #define OPCODE(code)	case 0x##code:
 #define DONE			break;
-#else
-#define OPCODE(code)	opcode_##code:
-#define DONE			goto next;
-	static void *opcode[256] =
-	{
-		&&opcode_00, &&opcode_01, &&opcode_02, &&opcode_03,
-		&&opcode_04, &&opcode_05, &&opcode_06, &&opcode_07,
-		&&opcode_08, &&opcode_09, &&opcode_0a, &&opcode_0b,
-		&&opcode_0c, &&opcode_0d, &&opcode_0e, &&opcode_0f,
-
-		&&opcode_10, &&opcode_11, &&opcode_12, &&opcode_13,
-		&&opcode_14, &&opcode_15, &&opcode_16, &&opcode_17,
-		&&opcode_18, &&opcode_19, &&opcode_1a, &&opcode_1b,
-		&&opcode_1c, &&opcode_1d, &&opcode_1e, &&opcode_1f,
-
-		&&opcode_20, &&opcode_21, &&opcode_22, &&opcode_23,
-		&&opcode_24, &&opcode_25, &&opcode_26, &&opcode_27,
-		&&opcode_28, &&opcode_29, &&opcode_2a, &&opcode_2b,
-		&&opcode_2c, &&opcode_2d, &&opcode_2e, &&opcode_2f,
-
-		&&opcode_30, &&opcode_31, &&opcode_32, &&opcode_33,
-		&&opcode_34, &&opcode_35, &&opcode_36, &&opcode_37,
-		&&opcode_38, &&opcode_39, &&opcode_3a, &&opcode_3b,
-		&&opcode_3c, &&opcode_3d, &&opcode_3e, &&opcode_3f,
-
-		&&opcode_40, &&opcode_41, &&opcode_42, &&opcode_43,
-		&&opcode_44, &&opcode_45, &&opcode_46, &&opcode_47,
-		&&opcode_48, &&opcode_49, &&opcode_4a, &&opcode_4b,
-		&&opcode_4c, &&opcode_4d, &&opcode_4e, &&opcode_4f,
-
-		&&opcode_50, &&opcode_51, &&opcode_52, &&opcode_53,
-		&&opcode_54, &&opcode_55, &&opcode_56, &&opcode_57,
-		&&opcode_58, &&opcode_59, &&opcode_5a, &&opcode_5b,
-		&&opcode_5c, &&opcode_5d, &&opcode_5e, &&opcode_5f,
-
-		&&opcode_60, &&opcode_61, &&opcode_62, &&opcode_63,
-		&&opcode_64, &&opcode_65, &&opcode_66, &&opcode_67,
-		&&opcode_68, &&opcode_69, &&opcode_6a, &&opcode_6b,
-		&&opcode_6c, &&opcode_6d, &&opcode_6e, &&opcode_6f,
-
-		&&opcode_70, &&opcode_71, &&opcode_72, &&opcode_73,
-		&&opcode_74, &&opcode_75, &&opcode_76, &&opcode_77,
-		&&opcode_78, &&opcode_79, &&opcode_7a, &&opcode_7b,
-		&&opcode_7c, &&opcode_7d, &&opcode_7e, &&opcode_7f,
-
-		&&opcode_80, &&opcode_81, &&opcode_82, &&opcode_83,
-		&&opcode_84, &&opcode_85, &&opcode_86, &&opcode_87,
-		&&opcode_88, &&opcode_89, &&opcode_8a, &&opcode_8b,
-		&&opcode_8c, &&opcode_8d, &&opcode_8e, &&opcode_8f,
-
-		&&opcode_90, &&opcode_91, &&opcode_92, &&opcode_93,
-		&&opcode_94, &&opcode_95, &&opcode_96, &&opcode_97,
-		&&opcode_98, &&opcode_99, &&opcode_9a, &&opcode_9b,
-		&&opcode_9c, &&opcode_9d, &&opcode_9e, &&opcode_9f,
-
-		&&opcode_a0, &&opcode_a1, &&opcode_a2, &&opcode_a3,
-		&&opcode_a4, &&opcode_a5, &&opcode_a6, &&opcode_a7,
-		&&opcode_a8, &&opcode_a9, &&opcode_aa, &&opcode_ab,
-		&&opcode_ac, &&opcode_ad, &&opcode_ae, &&opcode_af,
-
-		&&opcode_b0, &&opcode_b1, &&opcode_b2, &&opcode_b3,
-		&&opcode_b4, &&opcode_b5, &&opcode_b6, &&opcode_b7,
-		&&opcode_b8, &&opcode_b9, &&opcode_ba, &&opcode_bb,
-		&&opcode_bc, &&opcode_bd, &&opcode_be, &&opcode_bf,
-
-		&&opcode_c0, &&opcode_c1, &&opcode_c2, &&opcode_c3,
-		&&opcode_c4, &&opcode_c5, &&opcode_c6, &&opcode_c7,
-		&&opcode_c8, &&opcode_c9, &&opcode_ca, &&opcode_cb,
-		&&opcode_cc, &&opcode_cd, &&opcode_ce, &&opcode_cf,
-
-		&&opcode_d0, &&opcode_d1, &&opcode_d2, &&opcode_d3,
-		&&opcode_d4, &&opcode_d5, &&opcode_d6, &&opcode_d7,
-		&&opcode_d8, &&opcode_d9, &&opcode_da, &&opcode_db,
-		&&opcode_dc, &&opcode_dd, &&opcode_de, &&opcode_df,
-
-		&&opcode_e0, &&opcode_e1, &&opcode_e2, &&opcode_e3,
-		&&opcode_e4, &&opcode_e5, &&opcode_e6, &&opcode_e7,
-		&&opcode_e8, &&opcode_e9, &&opcode_ea, &&opcode_eb,
-		&&opcode_ec, &&opcode_ed, &&opcode_ee, &&opcode_ef,
-
-		&&opcode_f0, &&opcode_f1, &&opcode_f2, &&opcode_f3,
-		&&opcode_f4, &&opcode_f5, &&opcode_f6, &&opcode_f7,
-		&&opcode_f8, &&opcode_f9, &&opcode_fa, &&opcode_fb,
-		&&opcode_fc, &&opcode_fd, &&opcode_fe, &&opcode_ff,
-	};
-#endif	/* NO_GOTO */
 
 	UBYTE N;					//* bit7 zero (0) or bit 7 non-zero (1) * /
 	UBYTE Z;					//* zero (0) or non-zero (1) * /
@@ -533,66 +202,14 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 	//!while (xpos < xpos_limit) {
 	xpos = 0;
 	while (xpos < *maxcycles) {
-
-#ifdef TRACE
-		if (tron) {
-			disassemble(PC, PC + 1);
-			printf("\tA=%2x, X=%2x, Y=%2x, S=%2x\n",
-				   A, X, Y, S);
-		}
-#endif
-
-#ifdef PROFILE
-		instruction_count[dGetByte(PC)]++;
-#endif
-
-#ifdef MONITOR_BREAK
-		memmove(&remember_PC[0], &remember_PC[1], (REMEMBER_PC_STEPS - 1) * 2);
-		remember_PC[REMEMBER_PC_STEPS - 1] = PC;
-
-		if (break_addr == PC) {
-			/*! UPDATE_GLOBAL_REGS;*/
-			CPU_GetStatus();
-			if (!Atari800_Exit(TRUE))
-				exit(0);
-			CPU_PutStatus();
-			/*! UPDATE_LOCAL_REGS;*/
-		}
-#endif
 		insn = dGetByte(PC++);
 		xpos += cycles[insn];
 
-#ifdef NO_GOTO
 		switch (insn) {
-#else
-		goto *opcode[insn];
-#endif
 
 	OPCODE(00)				/* BRK */
-#ifdef MONITOR_BREAK
-		if (brkhere) {
-			break_here = 1;
-			/*! UPDATE_GLOBAL_REGS;*/
-			CPU_GetStatus();
-			if (!Atari800_Exit(TRUE))
-				exit(0);
-			CPU_PutStatus();
-			/*! UPDATE_LOCAL_REGS;*/
-		}
-		else
-#endif
 		{
 			SA_C6502_RETURN;
-/*!
-			PC++;
-			PHW(PC);
-			PHPB1;
-			SetI;
-			PC = dGetWordAligned(0xfffe);
-#ifdef MONITOR_BREAK
-			ret_nesting++;
-#endif
-*/
 		}
 		DONE
 
@@ -769,11 +386,6 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 	OPCODE(20)				/* JSR abcd */
 		{
 			UWORD retadr = PC + 1;
-#ifdef MONITOR_BREAK
-			memmove(&remember_JMP[0], &remember_JMP[1], 2 * (REMEMBER_JMP_STEPS - 1));
-			remember_JMP[REMEMBER_JMP_STEPS - 1] = PC - 1;
-			ret_nesting++;
-#endif
 			PHW(retadr);
 			PC = dGetWord(PC);
 		}
@@ -944,11 +556,6 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 		data = PL;
 		PC = (PL << 8) | data;
 		/*! CPUCHECKIRQ;*/
-#ifdef MONITOR_BREAK
-		if (break_ret && ret_nesting <= 0)
-			break_step = 1;
-		ret_nesting--;
-#endif
 		DONE
 
 	OPCODE(41)				/* EOR (ab,x) */
@@ -1012,10 +619,6 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 		DONE
 
 	OPCODE(4c)				/* JMP abcd */
-#ifdef MONITOR_BREAK
-		memmove(&remember_JMP[0], &remember_JMP[1], 2 * (REMEMBER_JMP_STEPS - 1));
-		remember_JMP[REMEMBER_JMP_STEPS - 1] = PC - 1;
-#endif
 		PC = dGetWord(PC);
 		DONE
 
@@ -1108,11 +711,6 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 
 		data = PL;
 		PC = ((PL << 8) | data) + 1;
-#ifdef MONITOR_BREAK
-		if (break_ret && ret_nesting <= 0)
-			break_step = 1;
-		ret_nesting--;
-#endif
 		DONE
 
 	OPCODE(61)				/* ADC (ab,x) */
@@ -1208,19 +806,11 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 		DONE
 
 	OPCODE(6c)				/* JMP (abcd) */
-#ifdef MONITOR_BREAK
-		memmove(&remember_JMP[0], &remember_JMP[1], 2 * (REMEMBER_JMP_STEPS - 1));
-		remember_JMP[REMEMBER_JMP_STEPS - 1] = PC - 1;
-#endif
 		addr = dGetWord(PC);
-#ifdef CPU65C02
-		PC = dGetWord(addr);
-#else							/* original 6502 had a bug in jmp (addr) when addr crossed page boundary */
 		if ((UBYTE) addr == 0xff)
 			PC = (dGetByte(addr & ~0xff) << 8) | dGetByte(addr);
 		else
 			PC = dGetWord(addr);
-#endif
 		DONE
 
 	OPCODE(6d)				/* ADC abcd */
@@ -1912,35 +1502,11 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 	OPCODE(d2)				/* ESCRTS #ab (CIM) - on Atari is here instruction CIM [unofficial] !RS! */
 
 		SA_C6502_RETURN;
-/*
-		data = dGetByte(PC++);
-		//*! UPDATE_GLOBAL_REGS; * /
-		CPU_GetStatus();
-		Atari800_RunEsc(data);
-		CPU_PutStatus();
-		/*! UPDATE_LOCAL_REGS;* /
-		data = PL;
-		PC = ((PL << 8) | data) + 1;
-*/
-#ifdef MONITOR_BREAK
-		if (break_ret && ret_nesting <= 0)
-			break_step = 1;
-		ret_nesting--;
-#endif
 		DONE
 
 	OPCODE(f2)				/* ESC #ab (CIM) - on Atari is here instruction CIM [unofficial] !RS! */
 
 		SA_C6502_RETURN;
-/*
-		/* OPCODE(ff: ESC #ab - opcode FF is now used for INS [unofficial] instruction !RS! * /
-		data = dGetByte(PC++);
-		/*! UPDATE_GLOBAL_REGS;* /
-		CPU_GetStatus();
-		Atari800_RunEsc(data);
-		CPU_PutStatus();
-		/*! UPDATE_LOCAL_REGS;* /
-*/
 		DONE
 
 	OPCODE(02)				/* CIM [unofficial - crash intermediate] */
@@ -1957,27 +1523,6 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 	/* OPCODE(f2) Used for ESC #ab (CIM) */
 
 		SA_C6502_RETURN;
-/*
-		PC--;
-		/*! UPDATE_GLOBAL_REGS;* /
-		CPU_GetStatus();
-
-#ifdef CRASH_MENU
-		crash_address = PC;
-		crash_afterCIM = PC+1;
-		crash_code = insn;
-		ui((UBYTE*)atari_screen);
-#else
-#ifdef MONITOR_BREAK
-		break_cim = 1;
-#endif
-		if (!Atari800_Exit(TRUE))
-			exit(0);
-#endif /* CRASH_MENU * /
-
-		CPU_PutStatus();
-		/*! UPDATE_LOCAL_REGS;* /
-*/
 		DONE
 
 /* ---------------------------------------------- */
@@ -2036,26 +1581,10 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 		}
 		DONE
 
-#ifdef NO_GOTO
 	}
-#else
-	next:
-#endif
 
-#ifdef MONITOR_BREAK
-		if (break_step) {
-			/*! UPDATE_GLOBAL_REGS;*/
-			CPU_GetStatus();
-			if (!Atari800_Exit(TRUE))
-				exit(0);
-			CPU_PutStatus();
-			/*! UPDATE_LOCAL_REGS;*/
-		}
-#endif
 		continue;
 	}
-
-	/*! UPDATE_GLOBAL_REGS;*/
 
 	SA_C6502_RETURN;
 }
@@ -2063,56 +1592,3 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 void CPU_Initialise(void)
 {
 }
-#endif /* CPU_ASM */
-
-/*
-void CPU_Reset(void)
-{
-#ifdef PROFILE
-	memset(instruction_count, 0, sizeof(instruction_count));
-#endif
-
-	IRQ = 0;
-
-	regP = 0x34;				/* The unused bit is always 1, I flag set! * /
-	CPU_PutStatus( );	/* Make sure flags are all updated * /
-	regS = 0xff;
-	regPC = dGetWordAligned(0xfffc);
-}
-*/
-
-/*
-void CpuStateSave( UBYTE SaveVerbose )
-{
-	SaveUBYTE( &regA, 1 );
-
-	CPU_GetStatus( );	//* Make sure flags are all updated * /
-	SaveUBYTE( &regP, 1 );
-	
-	SaveUBYTE( &regS, 1 );
-	SaveUBYTE( &regX, 1 );
-	SaveUBYTE( &regY, 1 );
-	SaveUBYTE( &IRQ, 1 );
-
-	MemStateSave( SaveVerbose );
-	
-	SaveUWORD( &regPC, 1 );
-}
-
-void CpuStateRead( UBYTE SaveVerbose )
-{
-	ReadUBYTE( &regA, 1 );
-	
-	ReadUBYTE( &regP, 1 );
-	CPU_PutStatus( );	 //* Make sure flags are all updated * /
-
-	ReadUBYTE( &regS, 1 );
-	ReadUBYTE( &regX, 1 );
-	ReadUBYTE( &regY, 1 );
-	ReadUBYTE( &IRQ, 1 );
-
-	MemStateRead( SaveVerbose );
-	
-	ReadUWORD( &regPC, 1 );
-}
-*/

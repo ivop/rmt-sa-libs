@@ -1,5 +1,5 @@
 STRIP = -s
-CFLAGS = -DNO_GOTO -DNO_CYCLE_EXACT -O3 -shared ${STRIP}
+CFLAGS = -O3 -shared ${STRIP}
 
 all: sa_c6502.dll
 

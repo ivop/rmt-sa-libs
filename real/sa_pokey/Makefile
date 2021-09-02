@@ -1,5 +1,5 @@
 STRIP = -s
-CFLAGS = -O3 -shared ${STRIP} -DSTEREO -DNO_VOL_ONLY -DNO_CONSOL_SOUND
+CFLAGS = -O3 -shared ${STRIP}
 
 all: sa_pokey.dll
 

@@ -1,6 +1,4 @@
 /* Crippled version for the sa_pokey.dll use only */
-#include "sa_pokey.h"
-
 #ifndef __POKEY__
 #define __POKEY__
 

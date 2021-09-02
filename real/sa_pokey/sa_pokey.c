@@ -15,7 +15,6 @@ BOOL APIENTRY DllMain( HANDLE hModule,
     return TRUE;
 }
 
-
 void __declspec(dllexport) Pokey_About(char** name, char** author, char** description )
 {
 	*name =        (char*)"POKEY Chip Simulator, V2.3 (A800 1.2.4) -- experimental ivop fork";

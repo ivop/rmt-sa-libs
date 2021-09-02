@@ -37,7 +37,6 @@
 /* bear this legend.                                                         */
 /*                                                                           */
 /*****************************************************************************/
-#include "sa_pokey.h"
 
 #ifndef _POKEYSOUND_H
 #define _POKEYSOUND_H

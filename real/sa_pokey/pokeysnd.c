@@ -126,8 +126,6 @@ void Pokey_SoundInit(uint32 freq17, uint16 playback_freq, uint8 num_pokeys)
 
 	/* set the number of pokey chips currently emulated */
 	Num_pokeys = num_pokeys;
-
-	/*    _enable(); */ /* RSF - removed for portability 31-MAR-97 */
 }
 
 
@@ -157,16 +155,12 @@ void Update_pokey_sound(uint16 addr, uint8 val, uint8 chip, uint8 gain)
 	uint8 chan_mask;
 	uint8 chip_offs;
 
-	/* disable interrupts to handle critical sections */
-	/*    _disable(); */ /* RSF - removed for portability 31-MAR-97 */
-
 	/* calculate the chip_offs for the channel arrays */
 	chip_offs = chip << 2;
 
 	/* determine which address was changed */
 	switch (addr & 0x0f) {
 	case _AUDF1:
-		/* AUDF[CHAN1 + chip_offs] = val; */
 		chan_mask = 1 << CHAN1;
 
 		if (AUDCTL[chip] & CH1_CH2)		/* if ch 1&2 tied together */
@@ -174,26 +168,20 @@ void Update_pokey_sound(uint16 addr, uint8 val, uint8 chip, uint8 gain)
 		break;
 
 	case _AUDC1:
-		/* AUDC[CHAN1 + chip_offs] = val; */
-		/* RSF - changed gain (removed >> 4) 31-MAR-97 */
 		AUDV[CHAN1 + chip_offs] = (val & VOLUME_MASK) * gain;
 		chan_mask = 1 << CHAN1;
 		break;
 
 	case _AUDF2:
-		/* AUDF[CHAN2 + chip_offs] = val; */
 		chan_mask = 1 << CHAN2;
 		break;
 
 	case _AUDC2:
-		/* AUDC[CHAN2 + chip_offs] = val; */
-		/* RSF - changed gain (removed >> 4) 31-MAR-97 */
 		AUDV[CHAN2 + chip_offs] = (val & VOLUME_MASK) * gain;
 		chan_mask = 1 << CHAN2;
 		break;
 
 	case _AUDF3:
-		/* AUDF[CHAN3 + chip_offs] = val; */
 		chan_mask = 1 << CHAN3;
 
 		if (AUDCTL[chip] & CH3_CH4)		/* if ch 3&4 tied together */
@@ -201,28 +189,21 @@ void Update_pokey_sound(uint16 addr, uint8 val, uint8 chip, uint8 gain)
 		break;
 
 	case _AUDC3:
-		/* AUDC[CHAN3 + chip_offs] = val; */
-		/* RSF - changed gain (removed >> 4) 31-MAR-97 */
 		AUDV[CHAN3 + chip_offs] = (val & VOLUME_MASK) * gain;
 		chan_mask = 1 << CHAN3;
 		break;
 
 	case _AUDF4:
-		/* AUDF[CHAN4 + chip_offs] = val; */
 		chan_mask = 1 << CHAN4;
 		break;
 
 	case _AUDC4:
-		/* AUDC[CHAN4 + chip_offs] = val; */
-		/* RSF - changed gain (removed >> 4) 31-MAR-97 */
 		AUDV[CHAN4 + chip_offs] = (val & VOLUME_MASK) * gain;
 		chan_mask = 1 << CHAN4;
 		break;
 
 	case _AUDCTL:
-		/* AUDCTL[chip] = val; */
 		chan_mask = 15;			/* all channels */
-
 		break;
 
 	default:

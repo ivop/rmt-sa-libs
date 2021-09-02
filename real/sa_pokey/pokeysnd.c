@@ -1,7 +1,6 @@
-/* Crippled version for the sa_pokey.dll use only */
-/* PokeySound is Copyright(c) 1996-1998 by Ron Fries                         */
-/* See LICENSE file                                                          */ 
-/*****************************************************************************/
+// Crippled version for the sa_pokey.dll use only
+// PokeySound is Copyright(c) 1996-1998 by Ron Fries
+// See LICENSE file
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,48 +56,48 @@ static uint16 last_val2 = 0;		/* last output value */
 #endif
 extern int stereo_enabled;
 
-/*****************************************************************************/
-/* In my routines, I treat the sample output as another divide by N counter  */
-/* For better accuracy, the Samp_n_cnt has a fixed binary decimal point      */
-/* which has 8 binary digits to the right of the decimal point.  I use a two */
-/* byte array to give me a minimum of 40 bits, and then use pointer math to  */
-/* reference either the 24.8 whole/fraction combination or the 32-bit whole  */
-/* only number.  This is mainly used to keep the math simple for             */
-/* optimization. See below:                                                  */
-/*                                                                           */
-/* Representation on little-endian machines:                                 */
-/* xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx | xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx */
-/* fraction   whole    whole    whole      whole   unused   unused   unused  */
-/*                                                                           */
-/* Samp_n_cnt[0] gives me a 32-bit int 24 whole bits with 8 fractional bits, */
-/* while (uint32 *)((uint8 *)(&Samp_n_cnt[0])+1) gives me the 32-bit whole   */
-/* number only.                                                              */
-/*                                                                           */
-/* Representation on big-endian machines:                                    */
-/* xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx | xxxxxxxx xxxxxxxx xxxxxxxx.xxxxxxxx */
-/*  unused   unused   unused    whole      whole    whole    whole  fraction */
-/*                                                                           */
-/* Samp_n_cnt[1] gives me a 32-bit int 24 whole bits with 8 fractional bits, */
-/* while (uint32 *)((uint8 *)(&Samp_n_cnt[0])+3) gives me the 32-bit whole   */
-/* number only.                                                              */
-/*****************************************************************************/
+//**************************************************************************
+// In my routines, I treat the sample output as another divide by N counter
+// For better accuracy, the Samp_n_cnt has a fixed binary decimal point
+// which has 8 binary digits to the right of the decimal point.  I use a two
+// byte array to give me a minimum of 40 bits, and then use pointer math to
+// reference either the 24.8 whole/fraction combination or the 32-bit whole
+// only number.  This is mainly used to keep the math simple for
+// optimization. See below:
+//
+// Representation on little-endian machines:
+// xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx | xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx
+// fraction   whole    whole    whole      whole   unused   unused   unused
+//
+// Samp_n_cnt[0] gives me a 32-bit int 24 whole bits with 8 fractional bits,
+// while (uint32 *)((uint8 *)(&Samp_n_cnt[0])+1) gives me the 32-bit whole
+// number only.
+//
+// Representation on big-endian machines:
+// xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx | xxxxxxxx xxxxxxxx xxxxxxxx.xxxxxxxx
+//  unused   unused   unused    whole      whole    whole    whole  fraction
+// 
+// Samp_n_cnt[1] gives me a 32-bit int 24 whole bits with 8 fractional bits,
+// while (uint32 *)((uint8 *)(&Samp_n_cnt[0])+3) gives me the 32-bit whole
+// number only.
+//***************************************************************************
 
 
-/*****************************************************************************/
-/* Module:  Pokey_sound_init()                                               */
-/* Purpose: to handle the power-up initialization functions                  */
-/*          these functions should only be executed on a cold-restart        */
-/*                                                                           */
-/* Author:  Ron Fries                                                        */
-/* Date:    January 1, 1997                                                  */
-/*                                                                           */
-/* Inputs:  freq17 - the value for the '1.79MHz' Pokey audio clock           */
-/*          playback_freq - the playback frequency in samples per second     */
-/*          num_pokeys - specifies the number of pokey chips to be emulated  */
-/*                                                                           */
-/* Outputs: Adjusts local globals - no return value                          */
-/*                                                                           */
-/*****************************************************************************/
+//***************************************************************************
+// Module:  Pokey_sound_init()
+// Purpose: to handle the power-up initialization functions
+//          these functions should only be executed on a cold-restart
+//
+// Author:  Ron Fries
+// Date:    January 1, 1997
+//
+// Inputs:  freq17 - the value for the '1.79MHz' Pokey audio clock
+//          playback_freq - the playback frequency in samples per second
+//          num_pokeys - specifies the number of pokey chips to be emulated
+//
+// Outputs: Adjusts local globals - no return value
+//
+//***************************************************************************
 
 void Pokey_SoundInit(uint32 freq17, uint16 playback_freq, uint8 num_pokeys)
 {
@@ -129,24 +128,24 @@ void Pokey_SoundInit(uint32 freq17, uint16 playback_freq, uint8 num_pokeys)
 }
 
 
-/*****************************************************************************/
-/* Module:  Update_pokey_sound()                                             */
-/* Purpose: To process the latest control values stored in the AUDF, AUDC,   */
-/*          and AUDCTL registers.  It pre-calculates as much information as  */
-/*          possible for better performance.  This routine has not been      */
-/*          optimized.                                                       */
-/*                                                                           */
-/* Author:  Ron Fries                                                        */
-/* Date:    January 1, 1997                                                  */
-/*                                                                           */
-/* Inputs:  addr - the address of the parameter to be changed                */
-/*          val - the new value to be placed in the specified address        */
-/*          gain - specified as an 8-bit fixed point number - use 1 for no   */
-/*                 amplification (output is multiplied by gain)              */
-/*                                                                           */
-/* Outputs: Adjusts local globals - no return value                          */
-/*                                                                           */
-/*****************************************************************************/
+//**************************************************************************
+// Module:  Update_pokey_sound()
+// Purpose: To process the latest control values stored in the AUDF, AUDC,
+//          and AUDCTL registers.  It pre-calculates as much information as
+//          possible for better performance.  This routine has not been
+//          optimized.
+//
+// Author:  Ron Fries
+// Date:    January 1, 1997
+//
+// Inputs:  addr - the address of the parameter to be changed
+//          val - the new value to be placed in the specified address
+//          gain - specified as an 8-bit fixed point number - use 1 for no
+//                 amplification (output is multiplied by gain)
+//
+// Outputs: Adjusts local globals - no return value
+//
+//*************************************************************************
 
 void Update_pokey_sound(uint16 addr, uint8 val, uint8 chip, uint8 gain)
 {
@@ -212,11 +211,11 @@ void Update_pokey_sound(uint16 addr, uint8 val, uint8 chip, uint8 gain)
 	}
 
 /************************************************************/
-	/* As defined in the manual, the exact Div_n_cnt values are */
-	/* different depending on the frequency and resolution:     */
-	/*    64 kHz or 15 kHz - AUDF + 1                           */
-	/*    1 MHz, 8-bit -     AUDF + 4                           */
-	/*    1 MHz, 16-bit -    AUDF[CHAN1]+256*AUDF[CHAN2] + 7    */
+/* As defined in the manual, the exact Div_n_cnt values are */
+/* different depending on the frequency and resolution:     */
+/*    64 kHz or 15 kHz - AUDF + 1                           */
+/*    1 MHz, 8-bit -     AUDF + 4                           */
+/*    1 MHz, 16-bit -    AUDF[CHAN1]+256*AUDF[CHAN2] + 7    */
 /************************************************************/
 
 	/* only reset the channels that have changed */
@@ -325,23 +324,23 @@ void Update_pokey_sound(uint16 addr, uint8 val, uint8 chip, uint8 gain)
 }
 
 
-/*****************************************************************************/
-/* Module:  Pokey_process()                                                  */
-/* Purpose: To fill the output buffer with the sound output based on the     */
-/*          pokey chip parameters.                                           */
-/*                                                                           */
-/* Author:  Ron Fries                                                        */
-/* Date:    January 1, 1997                                                  */
-/*                                                                           */
-/* Inputs:  *buffer - pointer to the buffer where the audio output will      */
-/*                    be placed                                              */
-/*          n - size of the playback buffer                                  */
-/*          num_pokeys - number of currently active pokeys to process        */
-/*                                                                           */
-/* Outputs: the buffer will be filled with n bytes of audio - no return val  */
-/*          Also the buffer will be written to disk if Sound recording is ON */
-/*                                                                           */
-/*****************************************************************************/
+//**************************************************************************
+// Module:  Pokey_process()
+// Purpose: To fill the output buffer with the sound output based on the
+//          pokey chip parameters.
+//
+// Author:  Ron Fries
+// Date:    January 1, 1997
+//
+// Inputs:  *buffer - pointer to the buffer where the audio output will
+//                    be placed
+//          n - size of the playback buffer
+//          num_pokeys - number of currently active pokeys to process
+//
+// Outputs: the buffer will be filled with n bytes of audio - no return val
+//          Also the buffer will be written to disk if Sound recording is ON
+//
+//**************************************************************************
 
 void Pokey_Process(uint8 * sndbuffer, const uint16 sndn)
 {

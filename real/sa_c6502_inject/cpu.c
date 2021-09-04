@@ -193,7 +193,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 
 #ifdef CHECK_PREVIOUS_MEMORY
     if (memcmp(g_memory + 0x3182, g_memory_prev + 0x3182, 2264))
-        fprintf(stderr, "%s: memory changed\n", __func__);
+        fprintf(stderr, "%s: tracker memory changed\n", __func__);
 #endif
 
 #ifdef INJECT_TRACKER_OBX

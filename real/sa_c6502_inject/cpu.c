@@ -11,6 +11,9 @@
 #include "sa_c6502.h"       // our sa_c6502 pridavky hook ;)
 
 UBYTE* g_memory = NULL;
+#ifdef CHECK_PREVIOUS_MEMORY
+UBYTE g_memory_prev[65536];
+#endif
 int xpos=0;
 
 #define dGetByte(adr)       g_memory[adr]
@@ -159,6 +162,10 @@ void __declspec(dllexport) C6502_Initialise(BYTE* memory) {
     else
         fprintf(stderr, "%s: memory is zeroed\n", __func__);
 #endif
+
+#ifdef CHECK_PREVIOUS_MEMORY
+    memcpy(g_memory_prev, g_memory, 65536);
+#endif
 }
 
 int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yreg, int* maxcycles)
@@ -183,6 +190,11 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 
 
     if (!g_memory) return -1;
+
+#ifdef CHECK_PREVIOUS_MEMORY
+    if (memcmp(g_memory + 0x3182, g_memory_prev + 0x3182, 2264))
+        fprintf(stderr, "%s: memory changed\n", __func__);
+#endif
 
 #ifdef INJECT_TRACKER_OBX
     if (!strncmp(g_memory+0x3182, "TRACKER ", 8)) {
@@ -1579,6 +1591,10 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
     }
 
     SA_C6502_RETURN;
+
+#ifdef CHECK_PREVIOUS_MEMORY
+    memcpy(g_memory_prev, g_memory, 65536);
+#endif
 }
 
 void CPU_Initialise(void)

@@ -117,6 +117,7 @@ int cycles[256] =
 #define NCYCLES_Y       if ( (UBYTE) addr < Y ) xpos++;
 #define NCYCLES_X       if ( (UBYTE) addr < X ) xpos++;
 
+#ifdef INJECT_TRACKER_OBX
 void load_raw(char *filename, char *mem, int skip) {
     FILE *f;
     int i;
@@ -134,6 +135,7 @@ void load_raw(char *filename, char *mem, int skip) {
 
     fclose(f);
 }
+#endif
 
 int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yreg, int* maxcycles)
 {
@@ -158,8 +160,10 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 
     if (!g_memory) return -1;
 
+#ifdef INJECT_TRACKER_OBX
     if (!strncmp(g_memory+0x3182, "TRACKER ", 8))
         load_raw("tracker.obx", g_memory+0x3182, 6);    // skip FFFF header
+#endif
 
     SA_C6502_INIT;
 

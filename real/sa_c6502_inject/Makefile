@@ -1,5 +1,5 @@
 STRIP = -s
-CFLAGS = -O3 -shared ${STRIP}
+CFLAGS = -O3 -shared ${STRIP} -DINJECT_TRACKER_OBX
 
 all: sa_c6502.dll
 

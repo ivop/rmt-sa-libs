@@ -27,7 +27,18 @@ int xpos=0;
 void __declspec(dllexport) C6502_Initialise(BYTE* memory)
 {
     g_memory = memory;
-    // Load MONO, STEREO and TRACKER obx
+
+#ifdef CHECK_INIT_MEMORY
+    int i, r = 0;
+
+    for (i=0; i<65536; i++)
+        r += g_memory[i];
+
+    if (!r)
+        fprintf(stderr, "INIT: memory is not zeroed\n");
+    else
+        fprintf(stderr, "INIT: memory is zeroed\n");
+#endif
 }
 
 #include "cpu.h"

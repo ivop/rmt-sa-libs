@@ -120,7 +120,7 @@ int cycles[256] =
 #ifdef INJECT_TRACKER_OBX
 void load_raw(char *filename, char *mem, int skip) {
     FILE *f;
-    int i;
+    int i, r;
 
     fprintf(stderr, "LOAD TRACKER\n");
 
@@ -131,7 +131,8 @@ void load_raw(char *filename, char *mem, int skip) {
 
     for (i=0; i<skip; i++) fgetc(f);    // skippy!
 
-    fread(mem, 65535, 1, f);            // just read until it fails :)
+    r = fread(mem, 1, 65535, f);            // just read until it fails :)
+    fprintf(stderr, "Injected %i bytes\n", r);
 
     fclose(f);
 }

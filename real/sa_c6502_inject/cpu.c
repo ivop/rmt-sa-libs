@@ -24,23 +24,6 @@ int xpos=0;
 #define SA_C6502_INIT    { PC=*adr; A=*areg; X=*xreg; Y=*yreg; regP=0x34; S=0xff; }
 #define SA_C6502_RETURN  { *adr=PC; *areg=A; *xreg=X; *yreg=Y; *maxcycles=(*maxcycles-xpos); return insn; }
 
-void __declspec(dllexport) C6502_Initialise(BYTE* memory)
-{
-    g_memory = memory;
-
-#ifdef CHECK_INIT_MEMORY
-    int i, r = 0;
-
-    for (i=0; i<65536; i++)
-        r += g_memory[i];
-
-    if (!r)
-        fprintf(stderr, "%s: memory is not zeroed\n", __func__);
-    else
-        fprintf(stderr, "%s: memory is zeroed\n", __func__);
-#endif
-}
-
 #include "cpu.h"
 
 #define PL dGetByte(0x0100 + ++S)
@@ -128,6 +111,17 @@ int cycles[256] =
 #define NCYCLES_Y       if ( (UBYTE) addr < Y ) xpos++;
 #define NCYCLES_X       if ( (UBYTE) addr < X ) xpos++;
 
+// Addressing modes
+
+#define ABSOLUTE    addr=dGetWord(PC);PC+=2;
+#define ZPAGE       addr=dGetByte(PC++);
+#define ABSOLUTE_X  addr=dGetWord(PC)+X;PC+=2;
+#define ABSOLUTE_Y  addr=dGetWord(PC)+Y;PC+=2;
+#define INDIRECT_X  addr=(UBYTE)(dGetByte(PC++)+X);addr=dGetWord(addr);
+#define INDIRECT_Y  addr=dGetByte(PC++);addr=dGetWord(addr)+Y;
+#define ZPAGE_X     addr=(UBYTE)(dGetByte(PC++)+X);
+#define ZPAGE_Y     addr=(UBYTE)(dGetByte(PC++)+Y);
+
 #ifdef INJECT_TRACKER_OBX
 void load_raw(char *filename, char *mem, int skip) {
     FILE *f;
@@ -150,6 +144,22 @@ void load_raw(char *filename, char *mem, int skip) {
     fclose(f);
 }
 #endif
+
+void __declspec(dllexport) C6502_Initialise(BYTE* memory) {
+    g_memory = memory;
+
+#ifdef CHECK_INIT_MEMORY
+    int i, r = 0;
+
+    for (i=0; i<65536; i++)
+        r += g_memory[i];
+
+    if (!r)
+        fprintf(stderr, "%s: memory is not zeroed\n", __func__);
+    else
+        fprintf(stderr, "%s: memory is zeroed\n", __func__);
+#endif
+}
 
 int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yreg, int* maxcycles)
 {
@@ -183,17 +193,6 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 #endif
 
     SA_C6502_INIT;
-
-// Addressing modes
-
-#define ABSOLUTE    addr=dGetWord(PC);PC+=2;
-#define ZPAGE       addr=dGetByte(PC++);
-#define ABSOLUTE_X  addr=dGetWord(PC)+X;PC+=2;
-#define ABSOLUTE_Y  addr=dGetWord(PC)+Y;PC+=2;
-#define INDIRECT_X  addr=(UBYTE)(dGetByte(PC++)+X);addr=dGetWord(addr);
-#define INDIRECT_Y  addr=dGetByte(PC++);addr=dGetWord(addr)+Y;
-#define ZPAGE_X     addr=(UBYTE)(dGetByte(PC++)+X);
-#define ZPAGE_Y     addr=(UBYTE)(dGetByte(PC++)+Y);
 
     xpos = 0;
     while (xpos < *maxcycles) {

@@ -35,9 +35,9 @@ void __declspec(dllexport) C6502_Initialise(BYTE* memory)
         r += g_memory[i];
 
     if (!r)
-        fprintf(stderr, "INIT: memory is not zeroed\n");
+        fprintf(stderr, "%s: memory is not zeroed\n", __func__);
     else
-        fprintf(stderr, "INIT: memory is zeroed\n");
+        fprintf(stderr, "%s: memory is zeroed\n", __func__);
 #endif
 }
 
@@ -133,17 +133,19 @@ void load_raw(char *filename, char *mem, int skip) {
     FILE *f;
     int i, r;
 
-    fprintf(stderr, "LOAD TRACKER\n");
+    fprintf(stderr, "%s: read %s and skip %i bytes\n",
+            __func__, filename, skip);
 
     if (!(f = fopen(filename, "rb"))) {
-        fprintf(stderr, "Could not open %s\n", filename);
+        fprintf(stderr, "%s: could not open %s\n", __func__, filename);
         return;
     }
 
     for (i=0; i<skip; i++) fgetc(f);    // skippy!
 
     r = fread(mem, 1, 65535, f);            // just read until it fails :)
-    fprintf(stderr, "Injected %i bytes\n", r);
+
+    fprintf(stderr, "%s: injected %i bytes\n", __func__, r);
 
     fclose(f);
 }
@@ -173,8 +175,11 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
     if (!g_memory) return -1;
 
 #ifdef INJECT_TRACKER_OBX
-    if (!strncmp(g_memory+0x3182, "TRACKER ", 8))
+    if (!strncmp(g_memory+0x3182, "TRACKER ", 8)) {
+        fprintf(stderr, "%s: TRACKER tag found, loading file at $3182\n",
+                                                                    __func__);
         load_raw("tracker.obx", g_memory+0x3182, 6);    // skip FFFF header
+    }
 #endif
 
     SA_C6502_INIT;

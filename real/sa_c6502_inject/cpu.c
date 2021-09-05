@@ -146,6 +146,43 @@ void load_raw(char *filename, char *mem, int skip) {
 
     fclose(f);
 }
+
+static inline int GET16(FILE *f) {
+    int r = fgetc(f);
+    return r | fgetc(f) << 8;
+}
+
+void load_xex(char *filename, char *mem) {
+    FILE *f;
+    int start, end, length, r;
+
+    fprintf(stderr, "%s: load %s\n", __func__, filename);
+
+    if (!(f = fopen(filename, "rb"))) {
+        fprintf(stderr, "%s: could not open %s\n", __func__, filename);
+        return;
+    }
+
+    while (1) {
+        start = GET16(f);
+
+        if (start == 0xffff)
+            start = GET16(f);
+
+        end = GET16(f);
+        length = end - start + 1;
+
+        fprintf(stderr, "%s: load %04x - %04x\n", __func__, start, end);
+        r = fread(mem+start, 1, length, f);
+        fprintf(stderr, "%s: injected %i bytes\n", __func__, r);
+
+        r = fgetc(f);
+        if (r < 0) break;
+        ungetc(r, f);
+    }
+
+    fclose(f);
+}
 #endif
 
 void __declspec(dllexport) C6502_Initialise(BYTE* memory) {
@@ -207,9 +244,8 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 
 #ifdef INJECT_TRACKER_OBX
     if (!strncmp(g_memory+0x3182, "TRACKER ", 8)) {
-        fprintf(stderr, "%s: TRACKER tag found, loading file at $3182\n",
-                                                                    __func__);
-        load_raw("tracker.obx", g_memory+0x3182, 6);    // skip FFFF header
+        fprintf(stderr, "%s: TRACKER tag found, load tracker.obx\n", __func__);
+        load_xex("tracker.obx", g_memory);
         g_memory[0x35fc] = 0x60;    // PATCH RTS BACK IN!
     }
 #endif

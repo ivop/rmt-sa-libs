@@ -210,6 +210,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         fprintf(stderr, "%s: TRACKER tag found, loading file at $3182\n",
                                                                     __func__);
         load_raw("tracker.obx", g_memory+0x3182, 6);    // skip FFFF header
+        g_memory[0x35fc] = 0x60;    // PATCH RTS BACK IN!
     }
 #endif
 

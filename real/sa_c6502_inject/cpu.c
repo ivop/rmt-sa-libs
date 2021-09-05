@@ -192,8 +192,17 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
     if (!g_memory) return -1;
 
 #ifdef CHECK_PREVIOUS_MEMORY
-    if (memcmp(g_memory + 0x3182, g_memory_prev + 0x3182, 2264))
-        fprintf(stderr, "%s: tracker memory changed\n", __func__);
+    static int count = 0;
+    if (memcmp(g_memory + 0x3182, g_memory_prev + 0x3182, 2264)) {
+        fprintf(stderr, "\n%s: tracker memory changed (%i)\n", __func__, count);
+        for (int i=0; i<2264; i++) {
+            if (g_memory[0x3182+i] != g_memory_prev[0x3182+i]) {
+                fprintf(stderr, "loc %04x  cur: %02x  prev: %02x\n",
+                        0x3182+i, g_memory[0x3182+i], g_memory_prev[0x3182+i]);
+            }
+        }
+        count++;
+    }
 #endif
 
 #ifdef INJECT_TRACKER_OBX
@@ -215,7 +224,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 
     OPCODE(00)              /* BRK */
         {
-            SA_C6502_RETURN;
+            goto unified_return;
         }
         break;
 
@@ -713,7 +722,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 
     OPCODE(60)              /* RTS */
 
-        if (S=0xff) SA_C6502_RETURN;
+        if (S=0xff) goto unified_return;
 
         data = PL;
         PC = ((PL << 8) | data) + 1;
@@ -1507,12 +1516,12 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 
     OPCODE(d2)              /* ESCRTS #ab (CIM) - on Atari is here instruction CIM [unofficial] !RS! */
 
-        SA_C6502_RETURN;
+        goto unified_return;
         break;
 
     OPCODE(f2)              /* ESC #ab (CIM) - on Atari is here instruction CIM [unofficial] !RS! */
 
-        SA_C6502_RETURN;
+        goto unified_return;
         break;
 
     OPCODE(02)              /* CIM [unofficial - crash intermediate] */
@@ -1526,7 +1535,7 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
     OPCODE(92)
     OPCODE(b2)
 
-        SA_C6502_RETURN;
+        goto unified_return;
         break;
 
 /* ---------------------------------------------- */
@@ -1589,6 +1598,8 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 
         continue;
     }
+
+unified_return:
 
 #ifdef CHECK_PREVIOUS_MEMORY
     memcpy(g_memory_prev, g_memory, 65536);

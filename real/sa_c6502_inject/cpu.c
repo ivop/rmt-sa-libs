@@ -1590,11 +1590,11 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
         continue;
     }
 
-    SA_C6502_RETURN;
-
 #ifdef CHECK_PREVIOUS_MEMORY
     memcpy(g_memory_prev, g_memory, 65536);
 #endif
+
+    SA_C6502_RETURN;
 }
 
 void CPU_Initialise(void)

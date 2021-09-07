@@ -1,0 +1,11 @@
+Patch RMT 1.28
+
+
+0x00026840   44 00 55 68  44 AC 00 00  68 5E 4F 1B  00 FF 15 9C
+                                       -----------
+0x001b4f5e equals 1789790, the NTSC clock speed
+
+
+0x00026840   44 00 55 68  44 AC 00 00  68 87 0F 1B  00 FF 15 9C
+                                       -----------
+0x001b0f87 equals 1773447, the PAL clock speed.

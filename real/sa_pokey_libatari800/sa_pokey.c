@@ -33,6 +33,14 @@ void __declspec(dllexport) Pokey_Initialise(int *argc, char *argv[]) {
         else    fprintf(stderr, "%s: libatari800_next_frame failed\n",
                                                                     __func__);
     }
+
+    fprintf(stderr, "%s: libatari800_get_sound_frequency = %i\n",
+                                __func__, libatari800_get_sound_frequency());
+    fprintf(stderr, "%s: libatari800_get_num_sound_channels = %i\n",
+                               __func__, libatari800_get_num_sound_channels());
+    fprintf(stderr, "%s: libatari800_get_sound_sample_size = %s\n",
+            __func__, libatari800_get_sound_sample_size() == 1 ?
+            "8-bit audio" : "16-bit audio");
 }
 
 void __declspec(dllexport) Pokey_SoundInit(uint32_t freq17,

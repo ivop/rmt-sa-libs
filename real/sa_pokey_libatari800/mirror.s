@@ -2,7 +2,7 @@
     org $4000
 
 main
-    ldx #9
+    ldx #8
 loop
     lda shadow,x
     sta $d200,x
@@ -17,6 +17,7 @@ loop
 
     org $8200
 shadow
-:16 dta 0
+:15 dta 0
+    dta 3       ; SKCTL
 
     run main

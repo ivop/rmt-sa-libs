@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
-
-int libatari800_init (int argc, char ** argv);
+#include "libatari800.h"
 
 void __declspec(dllexport) Pokey_Initialise(int *argc, char *argv[]) {
     fprintf(stderr, "%s: argc=%i\n", __func__, argc);

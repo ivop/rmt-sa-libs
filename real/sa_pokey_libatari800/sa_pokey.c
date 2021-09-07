@@ -24,6 +24,15 @@ void __declspec(dllexport) Pokey_Initialise(int *argc, char *argv[]) {
         fprintf(stderr, "%s: libatari800_reboot_with_file succeeded\n",
                                                                     __func__);
     }
+ 
+    // run a few frames
+    for (int i=0; i<4; i++) {
+        int r = libatari800_next_frame(&my_input); // 0 = success
+        if (!r) fprintf(stderr, "%s: libatari800_next_frame succeeded\n",
+                                                                    __func__);
+        else    fprintf(stderr, "%s: libatari800_next_frame failed\n",
+                                                                    __func__);
+    }
 }
 
 void __declspec(dllexport) Pokey_SoundInit(uint32_t freq17,

@@ -34,6 +34,8 @@ void __declspec(dllexport) Pokey_Initialise(int *argc, char *argv[]) {
                                                                     __func__);
         else    fprintf(stderr, "%s: libatari800_next_frame failed\n",
                                                                     __func__);
+//        fprintf(stderr, "%s: libatari800_get_sound_buffer_len = %i\n",
+//                __func__, libatari800_get_sound_buffer_len());
     }
 
     fprintf(stderr, "%s: libatari800_get_sound_frequency = %i\n",

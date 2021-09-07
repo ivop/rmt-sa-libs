@@ -4,10 +4,26 @@
 
 static char *my_argv[] = { "-config", "atari800.cfg", NULL };
 
+static input_template_t my_input;
+
 void __declspec(dllexport) Pokey_Initialise(int *argc, char *argv[]) {
     fprintf(stderr, "%s: argc=%i\n", __func__, argc);
 
-    libatari800_init(-1, my_argv);
+    if (!libatari800_init(-1, my_argv)) {
+        fprintf(stderr, "%s: libatari800_init failed\n", __func__);
+        return;
+    } else {
+        fprintf(stderr, "%s: libatari800_init succeeded\n", __func__);
+    }
+
+    libatari800_clear_input_array(&my_input);
+    if (!libatari800_reboot_with_file("mirror.xex")) {
+        fprintf(stderr, "%s: libatari800_reboot_with_file failed\n", __func__);
+        return;
+    } else {
+        fprintf(stderr, "%s: libatari800_reboot_with_file succeeded\n",
+                                                                    __func__);
+    }
 }
 
 void __declspec(dllexport) Pokey_SoundInit(uint32_t freq17,

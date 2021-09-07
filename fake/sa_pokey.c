@@ -15,6 +15,15 @@ void __declspec(dllexport) Pokey_SoundInit(uint32_t freq17,
 void __declspec(dllexport) Pokey_Process(uint8_t *sndbuffer,
                                          const uint16_t sndn) {
 //    fprintf(stderr, "%s: sndn=%u\n", __func__, sndn);
+
+//    if (sndn > 1400)
+//        fprintf(stderr, "%s: normal replay rate\n", __func__);
+//    else if (sndn > 700)
+//        fprintf(stderr, "%s: double replay rate\n", __func__);
+//    else if (sndn > 466)
+//        fprintf(stderr, "%s: triple replay rate\n", __func__);
+//    else if (sndn > 350)
+//        fprintf(stderr, "%s: quadruple replay rate\n", __func__);
 }
 
 uint8_t __declspec(dllexport) Pokey_GetByte(uint16_t addr) {

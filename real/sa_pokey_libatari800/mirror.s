@@ -14,7 +14,7 @@ loop
     lda shadow+0x0f
     sta $d20f
     lda shadow2+0x0f
-    sta $d20f
+    sta $d21f
 
     jmp main
 

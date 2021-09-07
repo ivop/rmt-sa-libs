@@ -2,9 +2,12 @@
 #include <stdint.h>
 #include "libatari800.h"
 
+static char *my_argv[] = { "-config", "atari800.cfg", NULL };
+
 void __declspec(dllexport) Pokey_Initialise(int *argc, char *argv[]) {
     fprintf(stderr, "%s: argc=%i\n", __func__, argc);
-    libatari800_init(0, NULL);
+
+    libatari800_init(-1, my_argv);
 }
 
 void __declspec(dllexport) Pokey_SoundInit(uint32_t freq17,

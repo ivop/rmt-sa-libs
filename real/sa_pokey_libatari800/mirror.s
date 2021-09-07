@@ -18,3 +18,5 @@ loop
     org $8200
 shadow
 :16 dta 0
+
+    run main

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include "libatari800.h"
 
 static char *argv_pal[]  = { "-config", "atari800-pal.cfg",  NULL };
@@ -84,6 +85,12 @@ void __declspec(dllexport) Pokey_SoundInit(uint32_t freq17,
 void __declspec(dllexport) Pokey_Process(uint8_t *sndbuffer,
                                          const uint16_t sndn) {
 //    fprintf(stderr, "%s: sndn=%u\n", __func__, sndn);
+
+#ifdef WHITE_NOISE_TEST
+    for (int i=0; i<sndn; i++)
+        sndbuffer[i] = rand();
+    return;
+#endif
 }
 
 // ----------------------------------------------------------------------------

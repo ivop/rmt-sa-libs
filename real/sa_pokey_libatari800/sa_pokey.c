@@ -11,6 +11,22 @@ static uint8_t *memory;
 
 void __declspec(dllexport) Pokey_Initialise(int *argc, char *argv[]) {
     fprintf(stderr, "%s: argc=%i\n", __func__, argc);
+}
+
+// ----------------------------------------------------------------------------
+
+void __declspec(dllexport) Pokey_SoundInit(uint32_t freq17,
+                                           uint16_t playback_freq,
+                                           uint8_t num_pokeys) {
+    fprintf(stderr, "%s: freq17=%u playback_freq=%u num_pokeys=%u\n",
+            __func__, freq17, playback_freq, num_pokeys);
+
+    if (freq17 == 1789790)
+        fprintf(stderr, "%s: NTSC frequency detected\n\n", __func__);
+    else if (freq17 == 1773447)
+        fprintf(stderr, "%s: PAL frequency detected\n\n", __func__);
+    else
+        fprintf(stderr, "%s: unknown frequency detected\n\n", __func__);
 
     if (!libatari800_init(-1, my_argv)) {
         fprintf(stderr, "%s: libatari800_init failed\n", __func__);
@@ -54,24 +70,6 @@ void __declspec(dllexport) Pokey_Initialise(int *argc, char *argv[]) {
 
     memory = libatari800_get_main_memory_ptr();
     fprintf(stderr, "%s: copied memory pointer\n", __func__);
-}
-
-// ----------------------------------------------------------------------------
-
-void __declspec(dllexport) Pokey_SoundInit(uint32_t freq17,
-                                           uint16_t playback_freq,
-                                           uint8_t num_pokeys) {
-    fprintf(stderr, "%s: freq17=%u playback_freq=%u num_pokeys=%u\n",
-            __func__, freq17, playback_freq, num_pokeys);
-    if (freq17 == 1789790)
-        fprintf(stderr, "%s: NTSC frequency detected\n", __func__);
-    else if (freq17 == 1773447)
-        fprintf(stderr, "%s: PAL frequency detected\n", __func__);
-    else
-        fprintf(stderr, "%s: unknown frequency detected\n", __func__);
-
-    // consider moving libatari800 init here, once we know we are in PAL or
-    // NTSC territory
 }
 
 // ----------------------------------------------------------------------------

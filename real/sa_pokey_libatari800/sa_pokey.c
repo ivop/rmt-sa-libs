@@ -63,6 +63,15 @@ void __declspec(dllexport) Pokey_SoundInit(uint32_t freq17,
                                            uint8_t num_pokeys) {
     fprintf(stderr, "%s: freq17=%u playback_freq=%u num_pokeys=%u\n",
             __func__, freq17, playback_freq, num_pokeys);
+    if (freq17 == 1789790)
+        fprintf(stderr, "%s: NTSC frequency detected\n", __func__);
+    else if (freq17 == 1773447)
+        fprintf(stderr, "%s: PAL frequency detected\n", __func__);
+    else
+        fprintf(stderr, "%s: unknown frequency detected\n", __func__);
+
+    // consider moving libatari800 init here, once we know we are in PAL or
+    // NTSC territory
 }
 
 // ----------------------------------------------------------------------------

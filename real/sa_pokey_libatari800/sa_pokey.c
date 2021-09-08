@@ -2,7 +2,10 @@
 #include <stdint.h>
 #include "libatari800.h"
 
-static char *my_argv[] = { "-config", "atari800.cfg", NULL };
+static char *argv_pal[]  = { "-config", "atari800-pal.cfg",  NULL };
+static char *argv_ntsc[] = { "-config", "atari800-ntsc.cfg", NULL };
+
+static char **my_argv;
 
 static input_template_t my_input;
 static uint8_t *memory;
@@ -21,12 +24,16 @@ void __declspec(dllexport) Pokey_SoundInit(uint32_t freq17,
     fprintf(stderr, "%s: freq17=%u playback_freq=%u num_pokeys=%u\n",
             __func__, freq17, playback_freq, num_pokeys);
 
-    if (freq17 == 1789790)
-        fprintf(stderr, "%s: NTSC frequency detected\n\n", __func__);
-    else if (freq17 == 1773447)
-        fprintf(stderr, "%s: PAL frequency detected\n\n", __func__);
-    else
-        fprintf(stderr, "%s: unknown frequency detected\n\n", __func__);
+    if (freq17 == 1789790) {
+        fprintf(stderr, "%s: NTSC detected\n\n", __func__);
+        my_argv = argv_ntsc;
+    } else if (freq17 == 1773447) {
+        fprintf(stderr, "%s: PAL detected\n\n", __func__);
+        my_argv = argv_pal;
+    } else {
+        fprintf(stderr, "%s: unknown frequency, default NTSC\n\n", __func__);
+        my_argv = argv_ntsc;
+    }
 
     if (!libatari800_init(-1, my_argv)) {
         fprintf(stderr, "%s: libatari800_init failed\n", __func__);

@@ -11,6 +11,8 @@ static char **my_argv;
 static input_template_t my_input;
 static uint8_t *memory;
 
+#define MIRROR_POKEY 0x8200
+
 // ----------------------------------------------------------------------------
 
 void __declspec(dllexport) Pokey_Initialise(int *argc, char *argv[]) {
@@ -102,8 +104,12 @@ uint8_t __declspec(dllexport) Pokey_GetByte(uint16_t addr) {
 
 // ----------------------------------------------------------------------------
 
+// addr is relative to the start of the first pokey!
+
 void __declspec(dllexport) Pokey_PutByte(uint16_t addr, uint8_t byte) {
 //    fprintf(stderr, "%s: addr=%u byte=%u\n", __func__, addr, byte);
+
+    memory[MIRROR_POKEY+addr] = byte;
 }
 
 // ----------------------------------------------------------------------------

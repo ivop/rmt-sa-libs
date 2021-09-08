@@ -19,6 +19,9 @@ void __declspec(dllexport) Pokey_Initialise(int *argc, char *argv[]) {
     }
 
     libatari800_clear_input_array(&my_input);
+
+    fprintf(stderr, "%s: reboot with mirror.xex\n", __func__);
+
     if (!libatari800_reboot_with_file("mirror.xex")) {
         fprintf(stderr, "%s: libatari800_reboot_with_file failed\n", __func__);
         return;
@@ -45,6 +48,8 @@ void __declspec(dllexport) Pokey_Initialise(int *argc, char *argv[]) {
     fprintf(stderr, "%s: libatari800_get_sound_sample_size = %s\n",
             __func__, libatari800_get_sound_sample_size() == 1 ?
             "8-bit audio" : "16-bit audio");
+    fprintf(stderr, "%s: libatari800_get_fps = %f\n",
+                                __func__, libatari800_get_fps());
 }
 
 // ----------------------------------------------------------------------------

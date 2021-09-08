@@ -5,6 +5,7 @@
 static char *my_argv[] = { "-config", "atari800.cfg", NULL };
 
 static input_template_t my_input;
+static uint8_t *memory;
 
 // ----------------------------------------------------------------------------
 
@@ -50,6 +51,9 @@ void __declspec(dllexport) Pokey_Initialise(int *argc, char *argv[]) {
             "8-bit audio" : "16-bit audio");
     fprintf(stderr, "%s: libatari800_get_fps = %f\n",
                                 __func__, libatari800_get_fps());
+
+    memory = libatari800_get_main_memory_ptr();
+    fprintf(stderr, "%s: copied memory pointer\n", __func__);
 }
 
 // ----------------------------------------------------------------------------

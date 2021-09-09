@@ -1,6 +1,14 @@
 
     org $4000
 
+    lda #0
+    ldx #15
+init
+    sta $d200,x
+    sta $d210,x
+    dex
+    bpl init
+
 main
     ldx #8
 loop

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include "libatari800.h"
 
 static char *argv_pal[]  = { "-config", "atari800-pal.cfg",  NULL };
@@ -10,6 +11,9 @@ static char **my_argv;
 
 static input_template_t my_input;
 static uint8_t *memory;
+
+static uint8_t *temp_buffer[65536];     // more than big enough :)
+static int bytes_in_temp_buffer = 0;
 
 #define MIRROR_POKEY 0x8200
 
@@ -86,13 +90,36 @@ void __declspec(dllexport) Pokey_SoundInit(uint32_t freq17,
 
 void __declspec(dllexport) Pokey_Process(uint8_t *sndbuffer,
                                          const uint16_t sndn) {
-//    fprintf(stderr, "%s: sndn=%u\n", __func__, sndn);
-
+//    fprintf(stderr, "%s: %i bytes requested\n", __func__, sndn);
 #ifdef WHITE_NOISE_TEST
     for (int i=0; i<sndn; i++)
         sndbuffer[i] = rand();
     return;
 #endif
+
+    while (bytes_in_temp_buffer < sndn) {
+        int r = libatari800_next_frame(&my_input); // 0 = success
+        if (r) {
+            fprintf(stderr, "%s: next_frame failed\n", __func__);
+            return;
+        }
+
+        uint8_t *libatari800_sound_buffer = libatari800_get_sound_buffer();
+        int libatari800_sound_buffer_len = libatari800_get_sound_buffer_len();
+
+        memcpy(temp_buffer + bytes_in_temp_buffer,
+               libatari800_sound_buffer, libatari800_sound_buffer_len);
+
+        bytes_in_temp_buffer += libatari800_sound_buffer_len;
+
+//        fprintf(stderr, "%s: added %i bytes to temp_buffer\n", __func__,
+//                libatari800_sound_buffer_len);
+    }
+
+    memcpy(sndbuffer, temp_buffer, sndn);
+    memcpy(temp_buffer, temp_buffer+sndn, bytes_in_temp_buffer - sndn);
+
+    bytes_in_temp_buffer -= sndn;
 }
 
 // ----------------------------------------------------------------------------

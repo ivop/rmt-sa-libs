@@ -61,17 +61,6 @@ void __declspec(dllexport) Pokey_SoundInit(uint32_t freq17,
                                                                     __func__);
     }
  
-    // run a few frames
-    for (int i=0; i<4; i++) {
-        int r = libatari800_next_frame(&my_input); // 0 = success
-        if (!r) fprintf(stderr, "%s: libatari800_next_frame succeeded\n",
-                                                                    __func__);
-        else    fprintf(stderr, "%s: libatari800_next_frame failed\n",
-                                                                    __func__);
-//        fprintf(stderr, "%s: libatari800_get_sound_buffer_len = %i\n",
-//                __func__, libatari800_get_sound_buffer_len());
-    }
-
     fprintf(stderr, "%s: libatari800_get_sound_frequency = %i\n",
                                 __func__, libatari800_get_sound_frequency());
     fprintf(stderr, "%s: libatari800_get_num_sound_channels = %i\n",

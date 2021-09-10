@@ -144,8 +144,8 @@ void __declspec(dllexport) Pokey_PutByte(uint16_t addr, uint8_t byte) {
 void __declspec(dllexport) Pokey_About(char** name,
                                        char** author,
                                        char** description ) {
-    *name        = (char*) "Bleh bleh bleh";
-    *author      = (char*) "Dracula";
-    *description = (char*) "I never say that!";
+    *name        = (char*) "sa_pokey libatari800 bridge";
+    *author      = (char*) "Ivo van Poorten";
+    *description = (char*) "https://github.com/ivop/rmt-sa-libs/tree/main/real/sa_pokey_libatari800";
 }
 

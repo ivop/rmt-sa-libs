@@ -12,7 +12,7 @@ static char **my_argv;
 static input_template_t my_input;
 static uint8_t *memory;
 
-static uint8_t *temp_buffer[65536];     // more than big enough :)
+static uint8_t temp_buffer[65536];     // more than big enough :)
 static int bytes_in_temp_buffer = 0;
 
 #define MIRROR_POKEY 0x8200
@@ -119,7 +119,7 @@ void __declspec(dllexport) Pokey_Process(uint8_t *sndbuffer,
     memcpy(sndbuffer, temp_buffer, sndn);
     memcpy(temp_buffer, temp_buffer+sndn, bytes_in_temp_buffer - sndn);
 
-    bytes_in_temp_buffer -= sndn;
+   bytes_in_temp_buffer -= sndn;
 }
 
 // ----------------------------------------------------------------------------

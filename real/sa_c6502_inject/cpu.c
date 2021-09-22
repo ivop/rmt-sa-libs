@@ -246,7 +246,6 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
     if (!strncmp(g_memory+0x3182, "TRACKER ", 8)) {
         fprintf(stderr, "%s: TRACKER tag found, load tracker.obx\n", __func__);
         load_xex("tracker.obx", g_memory);
-        g_memory[0x35fc] = 0x60;    // PATCH RTS BACK IN!
     }
 #endif
 

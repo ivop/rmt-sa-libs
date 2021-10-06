@@ -243,9 +243,11 @@ int __declspec(dllexport) C6502_JSR(WORD* adr, BYTE* areg, BYTE* xreg, BYTE* yre
 #endif
 
 #ifdef INJECT_TRACKER_OBX
-    if (!strncmp(g_memory+0x3182, "TRACKER ", 8)) {
-        fprintf(stderr, "%s: TRACKER tag found, load tracker.obx\n", __func__);
+    if (strncmp(g_memory + 0x700, "TRACKER ", 8)) {
+        fprintf(stderr, "%s: TRACKER tag not found, loading tracker.obx\n",
+                                                                    __func__);
         load_xex("tracker.obx", g_memory);
+        strncpy(g_memory + 0x700, "TRACKER ", 8);
     }
 #endif
 

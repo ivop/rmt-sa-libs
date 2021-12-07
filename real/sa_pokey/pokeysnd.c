@@ -348,7 +348,7 @@ void Pokey_Process(uint8 * sndbuffer, const uint16 sndn) {
     register uint32 event_min;
     register uint8 next_event;
     register uint8 cur_val;     /* no clipping */
-    register int8 cur_val2;
+    register uint8 cur_val2;
     register uint8 *out_ptr;
     register uint8 audc;
     register uint8 toggle;
@@ -365,8 +365,10 @@ void Pokey_Process(uint8 * sndbuffer, const uint16 sndn) {
     /* The current output is pre-determined and then adjusted based on each */
     /* output change for increased performance (less over-all math). */
     /* add the output values of all 4 channels */
-    cur_val = SAMP_MIN;
-    cur_val2 = SAMP_MIN;
+    //cur_val = SAMP_MIN;
+    //cur_val2 = SAMP_MIN;
+    cur_val = SAMP_MID;
+    cur_val2 = SAMP_MID;
 
     count = Num_pokeys;
     do {

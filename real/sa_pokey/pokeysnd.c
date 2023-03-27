@@ -125,6 +125,7 @@ void Pokey_SoundInit(uint32 freq17, uint16 playback_freq, uint8 num_pokeys) {
 
     /* set the number of pokey chips currently emulated */
     Num_pokeys = num_pokeys;
+    stereo_enabled = num_pokeys == 2;	// fuck you, I decide when to use Stereo, bitch
 }
 
 
